@@ -518,6 +518,243 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
     .compass-window .compass-ring { width: 148px; height: 148px; }
     .compass-window .compass-needle { top: 33px; height: 43px; transform-origin: 2px 42px; }
   }
+}
+
+.gyro-page {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #f7faf8 0%, #edf5f0 100%);
+  color: var(--ink);
+}
+
+.gyro-shell {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 36px 22px 48px;
+}
+
+.gyro-header {
+  margin-bottom: 24px;
+}
+
+.gyro-header h1 {
+  margin: 0 0 10px;
+  font-family: Manrope, sans-serif;
+  font-size: clamp(34px, 5vw, 58px);
+  letter-spacing: -.05em;
+}
+
+.gyro-intro {
+  max-width: 640px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.gyro-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(300px, 0.95fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.gyro-instrument-panel,
+.gyro-controls-panel {
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 14px 32px rgba(18, 58, 52, 0.08);
+}
+
+.gyro-instrument-panel {
+  padding: 22px;
+}
+
+.gyro-instrument {
+  display: grid;
+  place-items: center;
+  min-height: 360px;
+  border-radius: 16px;
+  background: radial-gradient(circle at center, rgba(161, 214, 184, 0.2), rgba(245, 247, 242, 0.78) 55%, rgba(236, 244, 236, 0.95));
+}
+
+.gyro-assembly {
+  position: relative;
+  width: 290px;
+  height: 290px;
+  transform-style: preserve-3d;
+  transition: transform 0.18s ease;
+}
+
+.gyro-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid rgba(18, 58, 52, 0.14);
+  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.78), rgba(239, 246, 240, 0.95));
+}
+
+.gyro-ring-outer {
+  box-shadow: inset 0 0 0 8px rgba(255, 255, 255, 0.7), inset 0 0 0 18px rgba(118, 166, 142, 0.14);
+}
+
+.gyro-ring-inner {
+  inset: 36px;
+  border-color: rgba(18, 58, 52, 0.2);
+  box-shadow: inset 0 0 0 6px rgba(255, 255, 255, 0.8);
+}
+
+.gyro-axis {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(18, 58, 52, 0.12);
+}
+
+.gyro-axis-horizontal {
+  width: 90%;
+  height: 2px;
+}
+
+.gyro-axis-vertical {
+  width: 2px;
+  height: 90%;
+}
+
+.gyro-indicator {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 25px;
+  height: 25px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 4px solid rgba(23, 107, 83, 0.9);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 0 0 7px rgba(23, 107, 83, 0.08);
+}
+
+.gyro-readout-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.gyro-readout-card {
+  min-width: 0;
+  padding: 12px 10px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #f8faf8;
+  text-align: center;
+}
+
+.gyro-readout-card span {
+  display: block;
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.gyro-readout-card strong {
+  display: block;
+  margin-top: 7px;
+  font-family: Manrope, sans-serif;
+  font-size: clamp(18px, 2vw, 28px);
+  letter-spacing: -.04em;
+}
+
+.gyro-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.secondary-button {
+  border: 1px solid var(--line);
+  background: white;
+  color: var(--green);
+}
+
+.gyro-status {
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.gyro-controls-panel {
+  padding: 22px 18px;
+}
+
+.gyro-controls-panel h2 {
+  margin: 0 0 18px;
+  font-family: Manrope, sans-serif;
+  font-size: 22px;
+}
+
+.gyro-control {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 12px;
+  color: #415953;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.gyro-control input {
+  width: 100%;
+  accent-color: var(--green);
+}
+
+.gyro-control output {
+  color: var(--green);
+  font-size: 12px;
+}
+
+@media (max-width: 860px) {
+  .gyro-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .gyro-readout-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 420px) {
+  .gyro-shell {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .gyro-instrument {
+    min-height: 300px;
+  }
+
+  .gyro-assembly {
+    width: 240px;
+    height: 240px;
+  }
+
+  .gyro-readout-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .gyro-action-row {
+    flex-direction: column;
+  }
+
+  .gyro-action-row .primary-button,
+  .gyro-action-row .secondary-button {
+    width: 100%;
+  }
+}
   .app-shell { padding: 26px 14px 22px; }
   .celestial-summary-panel { grid-template-columns: minmax(0, 1fr); gap: 8px; padding: 10px 12px; }
   .celestial-summary-panel .celestial-bezel-figure { grid-column: 1; grid-row: auto; width: 100%; max-width: 420px; justify-self: center; }

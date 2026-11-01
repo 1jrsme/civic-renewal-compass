@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#123a34">
+    <title>Gyroscope · Civic Renewal Atlas</title>
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body class="gyro-page">
+    <main class="gyro-shell">
+      <header class="gyro-header">
+        <p class="eyebrow">SPATIAL SENSOR</p>
+        <h1>Gyroscope</h1>
+        <p class="gyro-intro">Track orientation, tilt, and angular drift in a compact instrument inspired by the Atlas compass workspace.</p>
+      </header>
+
+      <section class="gyro-grid">
+        <div class="gyro-instrument-panel">
+          <div class="gyro-instrument" aria-label="Gyroscope instrument display">
+            <div id="gyro-assembly" class="gyro-assembly" aria-hidden="true">
+              <div class="gyro-ring gyro-ring-outer"></div>
+              <div class="gyro-ring gyro-ring-inner"></div>
+              <div class="gyro-axis gyro-axis-horizontal"></div>
+              <div class="gyro-axis gyro-axis-vertical"></div>
+              <div class="gyro-indicator"></div>
+            </div>
+          </div>
+
+          <div class="gyro-readout-grid" aria-live="polite">
+            <div class="gyro-readout-card">
+              <span>Heading</span>
+              <strong id="gyro-heading">32°</strong>
+            </div>
+            <div class="gyro-readout-card">
+              <span>Pitch</span>
+              <strong id="gyro-pitch">12°</strong>
+            </div>
+            <div class="gyro-readout-card">
+              <span>Roll</span>
+              <strong id="gyro-roll">-18°</strong>
+            </div>
+            <div class="gyro-readout-card">
+              <span>Spin</span>
+              <strong id="gyro-spin-rate">18°/s</strong>
+            </div>
+            <div class="gyro-readout-card">
+              <span>Stability</span>
+              <strong id="gyro-stability">84%</strong>
+            </div>
+          </div>
+
+          <div class="gyro-action-row">
+            <button id="gyro-live-toggle" class="primary-button" type="button">Use device orientation</button>
+            <button id="gyro-compass-toggle" class="small-button secondary-button" type="button">Use compass heading</button>
+            <button id="gyro-reset" class="small-button secondary-button" type="button">Reset</button>
+          </div>
+          <p id="gyro-motion-status" class="gyro-status" aria-live="polite">Manual mode</p>
+        </div>
+
+        <aside class="gyro-controls-panel">
+          <h2>Instrument controls</h2>
+
+          <label class="gyro-control" for="heading-control">
+            <span>Heading</span>
+            <input id="heading-control" type="range" min="0" max="359" step="1" value="32">
+            <output id="heading-output">32°</output>
+          </label>
+
+          <label class="gyro-control" for="pitch-control">
+            <span>Pitch</span>
+            <input id="pitch-control" type="range" min="-90" max="90" step="1" value="12">
+            <output id="pitch-output">12°</output>
+          </label>
+
+          <label class="gyro-control" for="roll-control">
+            <span>Roll</span>
+            <input id="roll-control" type="range" min="-180" max="180" step="1" value="-18">
+            <output id="roll-output">-18°</output>
+          </label>
+
+          <label class="gyro-control" for="spin-rate-control">
+            <span>Spin rate</span>
+            <input id="spin-rate-control" type="range" min="-720" max="720" step="1" value="18">
+            <output id="spin-rate-output">18°/s</output>
+          </label>
+
+          <label class="gyro-control" for="stability-control">
+            <span>Stability</span>
+            <input id="stability-control" type="range" min="0" max="100" step="1" value="84">
+            <output id="stability-output">84%</output>
+          </label>
+        </aside>
+      </section>
+    </main>
+
+    <script type="module" src="./src/gyro-app.js"></script>
+  </body>
+</html>

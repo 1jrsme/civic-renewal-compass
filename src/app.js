@@ -37,40 +37,13 @@ import {
 } from "./bezel-model.js";
 import { createIssWorldMap, updateIssWorldMap } from "./iss-map.js";
 import { lookupTimeZone } from "./time-zone.js";
+import { BASEMAP_DEFINITIONS } from "./basemap-definitions.js";
 
 const maplibregl = window.maplibregl;
 if (!maplibregl) throw new Error("The MapLibre map library did not load.");
 const initialLocation = getStartingLocation(loadDefaultLocationId());
 const baseMapPreference = loadBaseMapPreference();
-const baseMapDefinitions = {
-  street: {
-    label: "Street map · © OpenStreetMap contributors",
-    source: {
-      type: "raster",
-      tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
-      tileSize: 256,
-      attribution: "© OpenStreetMap contributors",
-    },
-  },
-  satellite: {
-    label: "Satellite imagery · Tiles © Esri and imagery contributors",
-    source: {
-      type: "raster",
-      tiles: ["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"],
-      tileSize: 256,
-      attribution: "Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community",
-    },
-  },
-  terrain: {
-    label: "Terrain map · © OpenTopoMap, © OpenStreetMap contributors, SRTM",
-    source: {
-      type: "raster",
-      tiles: ["https://a.tile.opentopomap.org/{z}/{x}/{y}.png"],
-      tileSize: 256,
-      attribution: "Map style: © OpenTopoMap (CC-BY-SA) · Map data: © OpenStreetMap contributors, SRTM",
-    },
-  },
-};
+const baseMapDefinitions = BASEMAP_DEFINITIONS;
 
 const map = new maplibregl.Map({
   container: "map",

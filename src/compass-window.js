@@ -27,6 +27,7 @@ import {
 } from "./bezel-model.js";
 import { createIssWorldMap, updateIssWorldMap } from "./iss-map.js";
 import { lookupTimeZone } from "./time-zone.js";
+import { BASEMAP_DEFINITIONS } from "./basemap-definitions.js";
 
 const byId = (id) => document.getElementById(id);
 const maplibregl = window.maplibregl;
@@ -34,32 +35,7 @@ if (!maplibregl) throw new Error("The MapLibre map library did not load.");
 const channel = "BroadcastChannel" in window
   ? new BroadcastChannel("civic-renewal-atlas-compass")
   : null;
-const basemapDefinitions = {
-  street: {
-    source: {
-      type: "raster",
-      tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
-      tileSize: 256,
-      attribution: "© OpenStreetMap contributors",
-    },
-  },
-  satellite: {
-    source: {
-      type: "raster",
-      tiles: ["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"],
-      tileSize: 256,
-      attribution: "Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community",
-    },
-  },
-  terrain: {
-    source: {
-      type: "raster",
-      tiles: ["https://a.tile.opentopomap.org/{z}/{x}/{y}.png"],
-      tileSize: 256,
-      attribution: "Map style: © OpenTopoMap (CC-BY-SA) · Map data: © OpenStreetMap contributors, SRTM",
-    },
-  },
-};
+const basemapDefinitions = BASEMAP_DEFINITIONS;
 const mapLayerControls = {
   epa: "window-layer-epa",
   buildings: "window-layer-buildings",
@@ -82,6 +58,9 @@ const publicSources = [
   { id: "osm-tiles", group: "public-data", name: "OpenStreetMap street tiles", description: "Street basemap provider and tile-use policy.", url: "https://operations.osmfoundation.org/policies/tiles/" },
   { id: "esri-tiles", group: "public-data", name: "Esri World Imagery", description: "Satellite basemap provider and terms.", url: "https://www.arcgis.com/home/item.html?id=10df2279f9684e4a9f6a7f08febac2a9" },
   { id: "opentopomap", group: "public-data", name: "OpenTopoMap", description: "Terrain basemap provider and attribution.", url: "https://opentopomap.org/" },
+  { id: "usgs-topo", group: "public-data", name: "USGS The National Map topographic tiles", description: "Public USGS topographic basemap tiles.", url: "https://basemap.nationalmap.gov/arcgis/rest/services/USGSTopo/MapServer" },
+  { id: "nasa-gibs", group: "public-data", name: "NASA GIBS Blue Marble tiles", description: "Public NASA global imagery tiles with a fixed 2016 Blue Marble date.", url: "https://earthdata.nasa.gov/data/tools/gibs" },
+  { id: "noaa-charts", group: "public-data", name: "NOAA nautical chart tiles", description: "Public NOAA nautical chart tiles for marine areas; chart coverage is limited to U.S. waters.", url: "https://www.charts.noaa.gov/" },
 ];
 const programSources = Object.entries(COMMUNITY_PROGRAMS).flatMap(([group, directory]) =>
   directory.resources.map((resource, index) => ({
