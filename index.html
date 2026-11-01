@@ -1,0 +1,640 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#123a34">
+    <meta name="description" content="Explore public environmental data, VA services, and community-verified reuse opportunities.">
+    <title>Civic Renewal Atlas</title>
+    <link rel="manifest" href="./manifest.webmanifest">
+    <link rel="icon" href="./icons/atlas.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.1/dist/maplibre-gl.css">
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="Civic Renewal Atlas home">
+        <span class="brand-mark" aria-hidden="true">CA</span>
+        <span><strong>Civic Renewal</strong><small>ATLAS</small></span>
+      </a>
+      <div class="top-actions">
+        <button class="icon-button" id="locate-button" type="button" aria-label="Use device location" title="Use device location">◎</button>
+        <button class="icon-button" id="report-open" type="button" aria-label="Create a field report" title="Add a field report">＋</button>
+      </div>
+    </header>
+
+    <main class="app-shell">
+      <section class="intro" aria-labelledby="page-title">
+        <p class="eyebrow">PUBLIC DATA · COMMUNITY ACTION</p>
+        <h1 id="page-title">See what your place<br>could become.</h1>
+        <p class="intro-copy">Explore environmental records, find nearby veterans’ services, and surface places that could serve the community.</p>
+        <label class="search-box">
+          <span class="sr-only">Search for a place</span>
+          <span aria-hidden="true">⌕</span>
+          <input id="place-search" type="search" value="Tallahassee, Florida" placeholder="Search a city, state, or ZIP" autocomplete="off">
+          <button id="search-button" type="button">Go</button>
+        </label>
+        <p id="search-status" class="subtle" aria-live="polite">Starting map area: Tallahassee, Florida. Select layers to load data.</p>
+        <label class="default-location-control" for="default-location-select">Default map location
+          <select id="default-location-select"></select>
+        </label>
+      </section>
+
+      <section class="map-card" aria-label="Interactive map">
+        <div class="map-toolbar">
+          <strong>Explore the map</strong>
+          <div class="toolbar-actions">
+            <button id="compass-toggle" class="text-button" type="button" aria-expanded="false" aria-controls="compass-panel">Compass overlay <span aria-hidden="true">⌄</span></button>
+            <button id="layers-toggle" class="text-button" type="button" aria-expanded="true" aria-controls="layer-controls">Layers <span aria-hidden="true">⌄</span></button>
+          </div>
+        </div>
+        <div class="map-preferences">
+          <label class="basemap-picker" for="basemap-select">Base map (choose one)
+            <select id="basemap-select">
+              <option value="street">Street · OpenStreetMap</option>
+              <option value="satellite">Satellite · Esri imagery</option>
+              <option value="terrain">Terrain · OpenTopoMap</option>
+            </select>
+          </label>
+          <span id="basemap-attribution-note" class="basemap-attribution-note" role="status">Street map · © OpenStreetMap contributors</span>
+          <div class="layer-selection-actions" aria-label="Map data layer selection">
+            <span id="selected-layer-count" class="selected-layer-count">0 data layers selected</span>
+            <button id="select-all-layers" class="text-button" type="button">Select all</button>
+            <button id="clear-all-layers" class="text-button" type="button" disabled>Clear</button>
+          </div>
+        </div>
+        <div id="layer-controls" class="layer-controls">
+          <label class="provider-mode-control" for="provider-mode">
+            Service access
+            <select id="provider-mode">
+              <option value="api">In-app API/data where available</option>
+              <option value="website">Provider website/app</option>
+            </select>
+          </label>
+          <div class="layer-option">
+            <label class="layer-toggle"><input id="toggle-epa" type="checkbox" aria-controls="epa-layer-options"><span class="layer-dot dot-epa"></span><span>EPA cleanup sample</span></label>
+            <label id="epa-layer-options" class="layer-filter" for="epa-status-filter" hidden>Status
+              <select id="epa-status-filter" disabled><option value="">All statuses</option></select>
+            </label>
+          </div>
+          <div class="layer-option">
+            <label class="layer-toggle"><input id="toggle-buildings" type="checkbox" aria-controls="community-layer-options"><span class="layer-dot dot-building"></span><span>Community leads</span></label>
+            <label id="community-layer-options" class="layer-filter" for="community-kind-filter" hidden>Lead type
+              <select id="community-kind-filter">
+                <option value="">All lead types</option>
+                <option value="environment-dumping">Visible debris or dumping</option>
+                <option value="environment-odor">Unusual odor observed</option>
+                <option value="environment-water">Water color or condition</option>
+                <option value="service-access">Public service access barrier</option>
+                <option value="building-lead">Potential community-use building</option>
+                <option value="park-recreation">Park or recreation area issue</option>
+              </select>
+            </label>
+          </div>
+          <div class="layer-option">
+            <label class="layer-toggle"><input id="toggle-reference" type="checkbox" aria-controls="reference-layer-options"><span class="layer-dot dot-reference"></span><span>Offline reference points</span></label>
+            <label id="reference-layer-options" class="layer-filter" for="reference-layer-kind" hidden>Facility type
+              <select id="reference-layer-kind">
+                <option value="">All types</option>
+                <option value="airport">Airports</option>
+                <option value="bus">Bus terminals</option>
+                <option value="train">Train stations</option>
+                <option value="port">Ports</option>
+                <option value="public-works">Public works</option>
+              </select>
+            </label>
+          </div>
+          <span class="layer-divider" aria-hidden="true"></span>
+          <div class="layer-option">
+            <label class="layer-toggle"><input id="toggle-weather-current" type="checkbox" data-weather-layer="current" aria-controls="weather-current-options"><span class="layer-dot dot-weather"></span><span>Current weather</span></label>
+            <label id="weather-current-options" class="layer-filter" for="weather-station" hidden>Observation station
+              <select id="weather-station" disabled><option value="">Load current weather to choose a station</option></select>
+            </label>
+          </div>
+          <div class="layer-option">
+            <label class="layer-toggle"><input id="toggle-weather-forecast" type="checkbox" data-weather-layer="forecast" aria-controls="weather-forecast-options"><span class="layer-dot dot-forecast"></span><span>Forecast</span></label>
+            <label id="weather-forecast-options" class="layer-filter" for="weather-forecast-count" hidden>Periods
+              <select id="weather-forecast-count">
+                <option value="3">Next 3</option>
+                <option value="5" selected>Next 5</option>
+              </select>
+            </label>
+          </div>
+          <div class="layer-option">
+            <label class="layer-toggle"><input id="toggle-weather-alerts" type="checkbox" data-weather-layer="alerts" aria-controls="weather-alert-options"><span class="layer-dot dot-alert"></span><span>Active alerts</span></label>
+            <label id="weather-alert-options" class="layer-filter" for="weather-alert-severity" hidden>Severity
+              <select id="weather-alert-severity">
+                <option value="">Any severity</option>
+                <option value="Minor">Minor or higher</option>
+                <option value="Moderate">Moderate or higher</option>
+                <option value="Severe">Severe or higher</option>
+                <option value="Extreme">Extreme only</option>
+              </select>
+            </label>
+          </div>
+        </div>
+        <p class="map-source-note">Choose one base map; data-layer checkboxes control which overlays load. Base-map tiles need internet, and provider terms apply.</p>
+        <details id="map-locations-panel" class="map-locations-panel" open>
+          <summary>Map locations <span id="map-location-count">0 selected</span></summary>
+          <div class="map-locations-content">
+            <p class="map-locations-note">Add places by name, enter coordinates, or request your current GPS position. Select a checkbox to show each point on the map. Locations stay in this browser session; GPS coordinates are not saved.</p>
+            <label class="map-locations-overlay"><input id="map-locations-overlay" type="checkbox" checked> Show selected locations on the map</label>
+            <form id="map-location-search-form" class="map-location-form">
+              <label for="map-location-search">Search for a place to add</label>
+              <div class="map-location-entry">
+                <input id="map-location-search" type="search" placeholder="City, airport, address, or landmark" autocomplete="off" required>
+                <button class="small-button" type="submit">Search and add</button>
+              </div>
+            </form>
+            <form id="map-coordinate-form" class="map-location-form">
+              <label for="map-location-label">Add coordinates</label>
+              <div class="map-coordinate-entry">
+                <input id="map-location-label" type="text" maxlength="70" placeholder="Point name (optional)" aria-label="Optional coordinate point name">
+                <input id="map-location-latitude" type="number" min="-90" max="90" step="any" placeholder="Latitude" aria-label="Latitude" required>
+                <input id="map-location-longitude" type="number" min="-180" max="180" step="any" placeholder="Longitude" aria-label="Longitude" required>
+                <input id="map-location-altitude" type="number" step="any" placeholder="Altitude m (optional)" aria-label="Optional altitude in meters">
+                <button class="small-button" type="submit">Add point</button>
+              </div>
+            </form>
+            <details class="public-landmark-picker">
+              <summary>Find public landmarks nearby</summary>
+              <p>Search public OpenStreetMap features inside the current map view. Results are community-mapped, may be incomplete, and are not an emergency directory.</p>
+              <div class="public-landmark-options" aria-label="Landmark categories">
+                <label><input type="checkbox" data-landmark-type="police" checked> Police</label>
+                <label><input type="checkbox" data-landmark-type="medical" checked> Hospitals and clinics</label>
+                <label><input type="checkbox" data-landmark-type="airports" checked> Airports</label>
+                <label><input type="checkbox" data-landmark-type="bus" checked> Bus stations</label>
+                <label><input type="checkbox" data-landmark-type="rail" checked> Rail stations</label>
+                <label><input type="checkbox" data-landmark-type="ports" checked> Ports and harbors</label>
+                <label><input type="checkbox" data-landmark-type="civic" checked> Civic and public facilities</label>
+              </div>
+              <button id="load-public-landmarks" class="small-button secondary-button" type="button">Load in current map view</button>
+              <p id="public-landmark-status" class="map-locations-status" role="status" aria-live="polite">No public landmark query has been made.</p>
+              <p class="public-landmark-source">Source: <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap contributors</a> via <a href="https://overpass-api.de/" target="_blank" rel="noreferrer">Overpass API</a> · ODbL · <span id="public-landmark-source-updated">Not queried this session</span></p>
+            </details>
+            <div class="map-location-actions">
+              <button id="map-location-gps" class="small-button secondary-button" type="button">Add my GPS location</button>
+              <button id="map-locations-clear" class="text-button" type="button" disabled>Clear all</button>
+            </div>
+            <label class="map-location-filter" for="map-location-filter">Search added locations
+              <input id="map-location-filter" type="search" placeholder="Filter by name or type">
+            </label>
+            <p id="map-locations-status" class="map-locations-status" role="status" aria-live="polite">No locations added. Search for a place or enter coordinates to start.</p>
+            <ul id="map-location-list" class="map-location-list" aria-label="Locations available for map overlay and compass"></ul>
+          </div>
+        </details>
+        <section class="celestial-summary-panel" aria-label="Sun, Moon, and ISS positions">
+          <div class="celestial-measurements" id="celestial-measurements" aria-live="polite"></div>
+          <dl class="celestial-time-readout" aria-label="Observation time">
+            <div><dt>Local · device</dt><dd id="celestial-local-time">—</dd><small id="celestial-local-zone">Device time zone</small></div>
+            <div><dt>Local · observer</dt><dd id="celestial-observer-time">—</dd><small id="celestial-observer-zone">Selected observer location</small></div>
+            <div><dt>UTC</dt><dd id="celestial-utc-time">—</dd><small>Coordinated Universal Time</small></div>
+          </dl>
+          <label class="celestial-view-picker" for="celestial-bezel-view">Display mode
+            <select id="celestial-bezel-view">
+              <option value="sphere">3D sky sphere</option>
+              <option value="sky-chart">2D sky chart</option>
+              <option value="world-map">Flat 2D world map · day/night</option>
+              <option value="perspective-map">Tilted 3D map · day/night</option>
+              <option value="globe-map">Rotatable 3D Earth globe · day/night</option>
+            </select>
+          </label>
+          <details class="celestial-bezel-controls">
+            <summary>Display options</summary>
+            <label><input id="celestial-bezel-visible" type="checkbox" checked> Show selected display</label>
+            <div class="celestial-body-options">
+              <label><input id="celestial-bezel-sun" type="checkbox" checked> Sun</label>
+              <label><input id="celestial-bezel-moon" type="checkbox" checked> Moon</label>
+              <label><input id="celestial-bezel-iss" type="checkbox" checked> ISS</label>
+            </div>
+            <label class="bezel-interval-picker" for="celestial-bezel-interval">Azimuth number interval
+              <select id="celestial-bezel-interval">
+                <option value="1">Every 1°</option><option value="5">Every 5°</option>
+                <option value="10">Every 10°</option><option value="15">Every 15°</option>
+                <option value="30" selected>Every 30°</option><option value="45">Every 45°</option>
+                <option value="90">Every 90°</option>
+              </select>
+            </label>
+          </details>
+          <figure id="celestial-bezel-figure" class="celestial-bezel-figure">
+            <svg id="celestial-bezel-svg" class="celestial-bezel-svg" viewBox="0 0 160 128" role="img" aria-label="Three-dimensional local sky sphere with numbered azimuth bezel and Sun, Moon, and ISS positions">
+              <title>Local sky positions</title>
+            </svg>
+            <svg id="celestial-sky-chart-svg" class="celestial-bezel-svg celestial-sky-chart-svg" viewBox="0 0 160 128" role="img" aria-label="Flat azimuth and altitude chart showing Sun, Moon, and International Space Station directions">
+              <title>Flat sky chart</title>
+            </svg>
+            <div id="iss-world-map" class="iss-world-map" role="application" aria-label="OpenStreetMap world map with sunlight, nighttime shading, Sun and Moon subpoints, and live ISS position" hidden></div>
+            <figcaption id="celestial-display-caption">Local sky orientation · azimuth 000° is north, 090° east · altitude 0° is the horizon. Approximate for the selected time and origin.</figcaption>
+          </figure>
+        </section>
+        <div class="map-stage">
+          <div id="map" role="application" aria-label="Map showing optional public data layers and weather information"></div>
+          <section id="compass-panel" class="compass-panel" aria-label="Compass overlay" hidden>
+          <div class="compass-instrument">
+            <div class="compass-ring" id="compass-ring">
+              <svg id="compass-bezel-overlay" class="compass-bezel-overlay" aria-hidden="true"></svg>
+              <span class="compass-mark north">N</span>
+              <span class="compass-mark east">E</span>
+              <span class="compass-mark south">S</span>
+              <span class="compass-mark west">W</span>
+              <span class="compass-tick tick-one"></span><span class="compass-tick tick-two"></span>
+              <span class="compass-tick tick-three"></span><span class="compass-tick tick-four"></span>
+              <span id="compass-needle" class="compass-needle" aria-hidden="true"></span>
+              <span class="compass-center" aria-hidden="true">⌖</span>
+            </div>
+            <div class="compass-readout">
+              <p class="eyebrow">DEVICE HEADING</p>
+              <strong id="compass-heading" aria-live="polite">—°</strong>
+              <span id="compass-status" role="status">Heading unavailable until enabled</span>
+              <button id="compass-enable" class="small-button compass-enable" type="button">Enable compass</button>
+              <button id="compass-window-open" class="small-button compass-window-open" type="button">Open separate window</button>
+              <label class="bezel-control">Adjust bezel
+                <input id="bezel-control" type="range" min="0" max="359" value="0" aria-label="Adjust compass bezel bearing">
+                <span><span>0°</span><output id="bezel-value">0°</output></span>
+              </label>
+              <p id="bearing-readout" class="bearing-readout">Bearing: —</p>
+              <details class="bezel-display-options">
+                <summary>Numbered bezel overlays</summary>
+                <label class="bezel-ring-visible"><input id="bezel-outer-visible" type="checkbox" checked> Outer bezel</label>
+                <details class="bezel-system-picker">
+                  <summary>Outer number systems</summary>
+                  <label><input id="bezel-outer-degrees" data-bezel-setting type="checkbox" checked> Degrees · 0–359</label>
+                  <label><input id="bezel-outer-gradians" data-bezel-setting type="checkbox"> Gradians · 0–399</label>
+                  <label><input id="bezel-outer-radians" data-bezel-setting type="checkbox"> Radians · 0–2π</label>
+                  <label><input id="bezel-outer-mils" data-bezel-setting type="checkbox"> NATO mils · 0–6399</label>
+                </details>
+                <label class="bezel-interval-picker" for="bezel-outer-interval">Outer label interval
+                  <select id="bezel-outer-interval" data-bezel-setting>
+                    <option value="1">Every 1°</option><option value="5">Every 5°</option>
+                    <option value="10">Every 10°</option><option value="15">Every 15°</option>
+                    <option value="30" selected>Every 30°</option><option value="45">Every 45°</option>
+                    <option value="90">Every 90°</option>
+                  </select>
+                </label>
+                <label class="bezel-ring-visible"><input id="bezel-inner-visible" type="checkbox"> Inner bezel</label>
+                <details class="bezel-system-picker">
+                  <summary>Inner number systems</summary>
+                  <label><input id="bezel-inner-degrees" data-bezel-setting type="checkbox"> Degrees · 0–359</label>
+                  <label><input id="bezel-inner-gradians" data-bezel-setting type="checkbox"> Gradians · 0–399</label>
+                  <label><input id="bezel-inner-radians" data-bezel-setting type="checkbox"> Radians · 0–2π</label>
+                  <label><input id="bezel-inner-mils" data-bezel-setting type="checkbox"> NATO mils · 0–6399</label>
+                </details>
+                <label class="bezel-interval-picker" for="bezel-inner-interval">Inner label interval
+                  <select id="bezel-inner-interval" data-bezel-setting>
+                    <option value="1">Every 1°</option><option value="5">Every 5°</option>
+                    <option value="10">Every 10°</option><option value="15">Every 15°</option>
+                    <option value="30" selected>Every 30°</option><option value="45">Every 45°</option>
+                    <option value="90">Every 90°</option>
+                  </select>
+                </label>
+                <p>Tick marks show each degree. Every-degree numbers are available but may overlap on small screens.</p>
+              </details>
+              <p id="compass-window-status" class="compass-window-status" role="status" aria-live="polite"></p>
+            </div>
+          </div>
+          <div class="compass-tools">
+            <label for="compass-mode">Mode
+              <select id="compass-mode">
+                <option value="earth-compass">Earth compass · simple</option>
+                <option value="3d-coordinate">3D coordinates · advanced</option>
+              </select>
+            </label>
+            <label for="spatial-frame">Coordinate frame
+              <select id="spatial-frame">
+                <option value="local-enu">Local ENU · east / north / up</option>
+                <option value="earth-ecef">Earth-centered ECEF · X / Y / Z</option>
+                <option value="heliocentric-ecliptic">Sun-centered ecliptic</option>
+                <option value="earth-centered-ecliptic">Earth-centered ecliptic</option>
+                <option value="body-centered-ecliptic">Selected-body-centered ecliptic</option>
+                <option value="barycentric-icrf">Solar-system barycentric ecliptic · JPL</option>
+              </select>
+            </label>
+            <div class="compass-coordinate-options" id="compass-coordinate-options">
+              <label for="spatial-origin-body">3D origin
+                <select id="spatial-origin-body"></select>
+              </label>
+              <label for="spatial-target-body">Target body
+                <select id="spatial-target-body"></select>
+              </label>
+              <label for="ephemeris-source">Ephemeris source
+                <select id="ephemeris-source">
+                  <option value="offline">Offline approximation · default</option>
+                  <option value="jpl">NASA/JPL Horizons · online</option>
+                </select>
+              </label>
+            </div>
+            <div class="compass-unit-options" id="compass-unit-options">
+              <label for="angle-unit">Angle
+                <select id="angle-unit">
+                  <option value="degrees">Degrees</option>
+                  <option value="radians">Radians</option>
+                  <option value="gradians">Gradians</option>
+                  <option value="mils">NATO mils</option>
+                </select>
+              </label>
+              <label for="distance-unit">Distance
+                <select id="distance-unit">
+                  <option value="meters">Meters</option>
+                  <option value="kilometers" selected>Kilometers</option>
+                  <option value="feet">Feet</option>
+                  <option value="miles">Miles</option>
+                  <option value="nautical">Nautical miles</option>
+                </select>
+              </label>
+              <label for="spatial-unit">3D units
+                <select id="spatial-unit">
+                  <option value="au">Astronomical units (AU)</option>
+                  <option value="million-kilometers">Million km</option>
+                  <option value="kilometers">Kilometers</option>
+                </select>
+              </label>
+              <label for="bearing-reference">Heading reference
+                <select id="bearing-reference">
+                  <option value="device">Device sensor</option>
+                  <option value="true-north">True north · geographic</option>
+                </select>
+              </label>
+            </div>
+            <div class="compass-time-tools">
+              <label class="compass-live-time"><input id="compass-live-time" type="checkbox" checked> Live time</label>
+              <label for="compass-time">Observation time
+                <input id="compass-time" type="datetime-local">
+              </label>
+              <button id="compass-time-now" class="small-button secondary-button" type="button">Now</button>
+              <label for="compass-time-step">Step
+                <select id="compass-time-step">
+                  <option value="minute">1 minute</option>
+                  <option value="hour">1 hour</option>
+                  <option value="day" selected>1 day</option>
+                  <option value="week">1 week</option>
+                  <option value="month">1 month</option>
+                  <option value="year">1 year</option>
+                </select>
+              </label>
+              <button id="compass-time-back" class="small-button secondary-button" type="button" aria-label="Step time backward">−</button>
+              <button id="compass-time-forward" class="small-button secondary-button" type="button" aria-label="Step time forward">+</button>
+            </div>
+            <details class="compass-targets" open>
+              <summary>Compass locations <span id="compass-target-count">0 selected</span></summary>
+              <label class="compass-map-overlay"><input id="compass-map-overlay-toggle" type="checkbox" checked> Show selected locations on map</label>
+              <label for="compass-origin-location">Origin location
+                <select id="compass-origin-location"><option value="map-center">Current map center</option></select>
+              </label>
+              <label class="compass-target-filter" for="compass-target-filter">Find selected locations
+                <input id="compass-target-filter" type="search" placeholder="Search compass locations">
+              </label>
+              <ul id="compass-target-list" aria-label="Select locations for compass calculations"></ul>
+            </details>
+            <div class="compass-measurements" id="compass-measurements" aria-live="polite">
+              <p>Add or select a compass location to calculate its bearing and 3D offset.</p>
+            </div>
+            <p id="ephemeris-status" class="compass-window-status" role="status" aria-live="polite">Offline estimates are local and approximate. JPL Horizons is optional and requires internet access.</p>
+            <button id="ephemeris-load" class="small-button secondary-button" type="button" hidden>Load precise JPL vector</button>
+          </div>
+          <div class="gps-readout">
+            <div>
+              <strong id="gps-position">Not shared</strong>
+              <span id="gps-accuracy">Location is not shared. Use the location button only when needed.</span>
+            </div>
+            <button id="gps-refresh" class="small-button" type="button">Use location</button>
+          </div>
+          </section>
+        </div>
+        <section id="weather-panel" class="weather-panel" aria-label="Weather for a selected place" hidden>
+          <div class="weather-location-tools">
+            <form id="weather-place-form" class="weather-place-form">
+              <label for="weather-place-search">Search weather for a place</label>
+              <div class="weather-place-entry">
+                <input id="weather-place-search" type="search" placeholder="City, airport, or ZIP" autocomplete="off">
+                <button class="small-button" type="submit">Search</button>
+              </div>
+              <p id="weather-place-status" role="status" aria-live="polite"></p>
+            </form>
+            <button id="weather-map-center" class="small-button secondary-button" type="button">Use map center</button>
+          </div>
+          <div class="weather-heading">
+            <div><p class="eyebrow">NATIONAL WEATHER SERVICE</p><h2>Weather for selected location</h2><p id="weather-location" class="weather-location"></p></div>
+            <button id="weather-refresh" class="small-button" type="button">Refresh</button>
+          </div>
+          <div id="weather-results" class="weather-results" aria-live="polite"></div>
+        </section>
+        <div class="map-foot"><span id="map-status" role="status" aria-live="polite">Choose a layer to load public data.</span><span>Map © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a></span></div>
+        <details class="map-downloads">
+          <summary>Download map and public data</summary>
+          <div class="map-download-content">
+            <p class="map-download-note">The PNG captures the current map view and provider attribution. CSV and GeoJSON contain only currently visible features from selected, loaded map layers and visible session points; unchecked, unloaded, pending reports, and weather cards are excluded. Downloads are created on this device.</p>
+            <div class="map-download-actions">
+              <button id="download-map-image" class="small-button" type="button">Download map image (PNG)</button>
+              <button id="download-map-csv" class="small-button secondary-button" type="button" disabled>Download visible data (CSV)</button>
+              <button id="download-map-geojson" class="small-button secondary-button" type="button" disabled>Download visible data (GeoJSON)</button>
+            </div>
+            <p id="download-map-data-status" class="map-download-status" role="status" aria-live="polite">Select and load a map data layer to enable CSV and GeoJSON downloads.</p>
+            <h3>Provider downloads for offline use</h3>
+            <ul class="map-provider-downloads">
+              <li><a href="https://apps.nationalmap.gov/downloader/" target="_blank" rel="noreferrer">USGS The National Map Downloader</a> — choose an area for official topographic maps, imagery, elevation, and other downloadable products.</li>
+              <li><a href="https://download.geofabrik.de/north-america/us.html" target="_blank" rel="noreferrer">OpenStreetMap U.S. regional extracts</a> — select a state or area and download OSM data in formats such as PBF or GeoPackage for offline mapping software.</li>
+              <li><a href="https://data.epa.gov/dmapservice/sems.envirofacts_site/primary_latitude_decimal_val/greaterthan/0/and/archived_ind/equals/N/1:1000/CSV" target="_blank" rel="noreferrer">EPA cleanup-site sample (CSV)</a> — provider download matching the app’s limited 1,000-record sample.</li>
+              <li><a href="https://www.arcgis.com/home/item.html?id=10df2279f9684e4a9f6a7f08febac2a9" target="_blank" rel="noreferrer">Esri World Imagery service details</a> — the live satellite basemap is a streaming service, not a bulk offline imagery download.</li>
+              <li><a href="https://opentopomap.org/about" target="_blank" rel="noreferrer">OpenTopoMap source and usage information</a> — terrain tiles are streamed; underlying OSM and elevation data can be obtained from their respective providers above.</li>
+            </ul>
+            <p class="map-download-note">The Atlas does not bulk-download or package map tiles: public tile services may prohibit prefetching or offline tile copies. Use each provider’s official area-download products and follow its license, attribution, and usage terms.</p>
+          </div>
+        </details>
+      </section>
+
+      <details id="local-tools" class="local-tools">
+        <summary>Local agencies and non-emergency contacts</summary>
+        <div id="local-services" class="local-services" hidden>
+          <div class="local-services-heading">
+            <div><p class="eyebrow">FIND LOCAL AGENCIES</p><strong id="local-area">Area not looked up</strong></div>
+            <button id="local-search-button" class="small-button" type="button">Find agencies</button>
+          </div>
+          <p class="local-search-note">With your request, approximate coordinates are sent to OpenStreetMap for an area name. Search links open external search sites and include that area, not your exact coordinates.</p>
+          <div id="local-search-results" class="local-search-results" aria-live="polite"></div>
+        </div>
+        <section class="local-contact-finder" aria-labelledby="local-contact-title">
+          <div class="local-contact-heading">
+            <div><p class="eyebrow">NON-EMERGENCY</p><h2 id="local-contact-title">Find a local service number</h2></div>
+          </div>
+          <p class="local-contact-warning"><strong>For an immediate threat to life or safety, call 911 in the U.S.</strong> This finder is for non-emergency contacts only. Search results are not verified; confirm the number on the agency’s official website before calling.</p>
+          <form id="local-contact-form" class="local-contact-form">
+            <label for="local-contact-type">Service</label>
+            <select id="local-contact-type" required>
+              <option value="police department non-emergency phone number">Police department non-emergency</option>
+              <option value="sheriff office non-emergency phone number">Sheriff’s office non-emergency</option>
+              <option value="fire department non-emergency contact number">Fire department non-emergency</option>
+              <option value="city county 311 non-emergency service phone number">City/county service line or 311</option>
+              <option value="animal control phone number">Animal control</option>
+              <option value="public works road maintenance phone number">Public works / road maintenance</option>
+              <option value="code enforcement phone number">Code enforcement</option>
+              <option value="local health department phone number">Local health department</option>
+              <option value="parks and recreation department office phone number">Parks and recreation</option>
+              <option value="211 community services referral phone number">Community and social services (211)</option>
+            </select>
+            <label for="local-contact-area">City, county, state, or ZIP</label>
+            <div class="local-contact-entry">
+              <input id="local-contact-area" type="search" placeholder="Use GPS area above or enter a place" autocomplete="postal-code" required>
+              <button class="small-button" type="submit">Find numbers</button>
+            </div>
+            <p id="local-contact-status" class="subtle" role="status" aria-live="polite">Searches open external results; no exact GPS coordinates are included.</p>
+          </form>
+          <div id="local-contact-results" class="local-contact-results" aria-live="polite"></div>
+        </section>
+      </details>
+
+      <section class="sources offline-reference-directory" aria-labelledby="offline-reference-title">
+        <div class="section-heading">
+          <div><p class="eyebrow">BUNDLED COORDINATES · WORKS OFFLINE</p><h2 id="offline-reference-title">Transport &amp; public works references</h2></div>
+          <span id="reference-count" class="live-badge" role="status" aria-live="polite">STATIC REFERENCE</span>
+        </div>
+        <p class="data-note">A curated nationwide starter set of airports, bus terminals, train stations, ports, and public-works offices. These approximate reference points are bundled with the app and do not require GPS or a data connection. They may not mark the correct entrance or a currently operating facility. Verify before travel or fieldwork. Map tiles and external links still require internet access.</p>
+        <form id="reference-search-form" class="reference-search-form">
+          <label for="reference-search">Find a reference point by name or area</label>
+          <div class="reference-search-entry">
+            <input id="reference-search" type="search" placeholder="Search airport, station, port, city, or state" autocomplete="off">
+            <label class="sr-only" for="reference-category">Filter by facility type</label>
+            <select id="reference-category">
+              <option value="">All facility types</option>
+              <option value="airport">Airports</option>
+              <option value="bus">Bus terminals</option>
+              <option value="train">Train stations</option>
+              <option value="port">Ports</option>
+              <option value="public-works">Public works</option>
+            </select>
+          </div>
+        </form>
+        <div class="reference-picker">
+        <label for="reference-location-select">Choose a facility</label>
+        <select id="reference-location-select" size="1">
+          <option value="">Type to search, then choose a facility</option>
+        </select>
+        </div>
+        <div id="reference-location-details" class="reference-location-details" hidden aria-live="polite">
+        <strong id="reference-location-name"></strong>
+        <p id="reference-location-place"></p>
+        <code id="reference-location-coordinates"></code>
+        <div class="reference-location-actions">
+          <button id="reference-center-button" class="small-button" type="button">Center map</button>
+          <a id="reference-map-link" target="_blank" rel="noreferrer">View OSM ↗</a>
+        </div>
+        </div>
+      </section>
+
+      <section class="sources" aria-labelledby="sources-title">
+        <div class="section-heading">
+          <div><p class="eyebrow">KNOW YOUR SOURCES</p><h2 id="sources-title">Data &amp; coverage</h2></div>
+          <span class="live-badge"><span></span> LIVE LOOKUP</span>
+        </div>
+        <div class="source-list">
+          <article class="source-row">
+            <span class="source-icon icon-green" aria-hidden="true">E</span>
+            <div class="source-info"><strong>EPA cleanup-site sample</strong><span id="epa-freshness">Not loaded; enable its layer to fetch data</span></div>
+            <a href="https://www.epa.gov/enviro/envirofacts-data-service-api" target="_blank" rel="noreferrer" aria-label="EPA data source information">↗</a>
+          </article>
+          <article class="source-row">
+            <span class="source-icon icon-blue" aria-hidden="true">V</span>
+            <div class="source-info"><strong>VA service locations</strong><span>Official locator · search by device area</span></div>
+            <a href="https://www.va.gov/find-locations/" target="_blank" rel="noreferrer" aria-label="Find official VA service locations">↗</a>
+          </article>
+          <article class="source-row">
+            <span class="source-icon icon-amber" aria-hidden="true">+</span>
+            <div class="source-info"><strong>Building reuse leads</strong><span>No live inventory; verify ownership &amp; availability</span></div>
+            <a href="https://realestatesales.gov/" target="_blank" rel="noreferrer" aria-label="Browse GSA surplus property listings">↗</a>
+          </article>
+        </div>
+        <p class="data-note">EPA map shows only the first 1,000 source records, not a complete national inventory. Records are leads, not determinations of contamination, property availability, or service eligibility. Check the source before acting. “Retrieved” is when this app fetched the data, not the agency’s update date.</p>
+      </section>
+
+      <section class="sources public-data-directory" aria-labelledby="public-data-title">
+        <div class="section-heading">
+          <div><p class="eyebrow">FREE PUBLIC DATA</p><h2 id="public-data-title">Government data directory</h2></div>
+          <span class="live-badge"><span></span> PUBLIC CATALOGS</span>
+        </div>
+        <p class="data-note">Search federal, state, county, and city datasets. Data.gov is a catalog of dataset descriptions and links, not the data itself. Public access is generally free, but individual datasets can have license, registration, coverage, or usage conditions. “Open data” does not mean the portal software is open source.</p>
+        <form id="public-data-form" class="public-data-form">
+          <label for="public-data-query">Topic or agency</label>
+          <div class="public-data-entry">
+            <input id="public-data-query" type="search" placeholder="e.g., brownfields, hospitals, parks" autocomplete="off">
+            <button class="small-button" type="submit">Find public data</button>
+          </div>
+          <p id="public-data-location" class="subtle">Search will include a local area after you use GPS and choose Find agencies.</p>
+        </form>
+        <div id="public-data-links" class="public-data-links" aria-live="polite"></div>
+      </section>
+
+      <section class="sources community-program-directory" aria-labelledby="community-program-title">
+        <div class="section-heading">
+          <div><p class="eyebrow">FIND PROGRAMS &amp; ASSISTANCE</p><h2 id="community-program-title">Community programs</h2></div>
+          <span id="program-result-count" class="live-badge" role="status" aria-live="polite">PROGRAM DIRECTORY</span>
+        </div>
+        <p class="data-note">Choose a government or community level and browse official starting points for benefits, housing, veterans, disaster help, jobs, health, environment, and other services. Program rules and availability vary; verify eligibility and details with the provider.</p>
+        <form id="community-program-form" class="community-program-form">
+          <label for="program-level">Government or community level</label>
+          <select id="program-level">
+            <option value="federal">Federal</option>
+            <option value="state">State · Florida</option>
+            <option value="county">County · Leon County</option>
+            <option value="city">City · Tallahassee</option>
+            <option value="other">Other · tribal, regional, and community</option>
+          </select>
+          <div id="federal-program-picker" class="federal-program-picker">
+            <details id="federal-program-dropdown">
+              <summary>Federal programs <span id="federal-program-selection-count">6 selected</span></summary>
+              <div class="federal-program-menu">
+                <div class="federal-program-menu-actions">
+                  <button id="federal-program-select-all" type="button" class="text-button">Select all</button>
+                  <button id="federal-program-clear" type="button" class="text-button">Clear</button>
+                </div>
+                <div id="federal-program-options" class="federal-program-options" aria-label="Choose federal programs"></div>
+              </div>
+            </details>
+          </div>
+          <label for="program-area">Area to search</label>
+          <input id="program-area" type="search" value="Tallahassee, Florida" placeholder="City, county, and state" autocomplete="address-level2">
+          <label for="program-topic">Program or need (optional)</label>
+          <input id="program-topic" type="search" placeholder="e.g., veterans, housing, food, jobs, parks" autocomplete="off">
+          <button class="small-button" type="submit">Show programs</button>
+        </form>
+        <div id="community-program-results" class="community-program-results" aria-live="polite"></div>
+      </section>
+
+      <section class="action-card" aria-labelledby="action-title">
+        <div class="action-copy"><p class="eyebrow">FIELD NOTES</p><h2 id="action-title">See something worth documenting?</h2><p>Send an opt-in report for review. Don’t include names, contact details, health information, or other private details.</p></div>
+        <button class="primary-button" id="report-open-bottom" type="button">＋&nbsp; Add a field note</button>
+      </section>
+
+      <footer>
+        <span>Civic Renewal Atlas · Community tool, not an agency service</span>
+        <a id="download-bundle" href="./civic-renewal-atlas.zip" download hidden>Download app files (ZIP)</a>
+        <a href="https://www.openstreetmap.org/fixthemap" target="_blank" rel="noreferrer">Report a map issue</a>
+      </footer>
+    </main>
+
+    <dialog id="report-dialog" aria-labelledby="report-title">
+      <form id="report-form" method="dialog">
+        <div class="dialog-heading"><div><p class="eyebrow">OPT-IN · REVIEW REQUIRED</p><h2 id="report-title">Add a field note</h2></div><button class="icon-button dialog-close" type="button" data-close aria-label="Close">×</button></div>
+        <p class="dialog-copy">This MVP saves reports only on this device. A report is not public or shared; review here only changes its local status.</p>
+        <label>What are you documenting?
+          <select id="report-kind" required>
+            <option value="environment-dumping">Visible debris or dumping</option>
+            <option value="environment-odor">Unusual odor observed</option>
+            <option value="environment-water">Water color or condition</option>
+            <option value="service-access">Public service access barrier</option>
+            <option value="building-lead">Potential community-use building</option>
+            <option value="park-recreation">Park or recreation area issue</option>
+          </select>
+        </label>
+        <label class="checkbox-line"><input id="report-location" type="checkbox"> Include my location (only after you confirm)</label>
+        <p class="dialog-copy">This form records only the selected category and, if you choose, your GPS location. It has no name, contact, or free-text fields.</p>
+        <p id="report-error" class="form-error" role="alert"></p>
+        <button class="primary-button full-width" type="submit">Save for review</button>
+      </form>
+    </dialog>
+
+    <div id="toast" role="status" aria-live="polite"></div>
+    <script src="https://unpkg.com/maplibre-gl@5.6.1/dist/maplibre-gl.js"></script>
+    <script type="module" src="./src/offline-references.js"></script>
+    <script type="module" src="./src/community-programs.js?v=federal-checklist"></script>
+    <script type="module" src="./src/app.js?v=iss-sky-normalize"></script>
+  </body>
+</html>

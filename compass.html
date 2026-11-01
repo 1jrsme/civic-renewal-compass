@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#123a34">
+    <title>Compass · Civic Renewal Atlas</title>
+    <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.1/dist/maplibre-gl.css">
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body class="compass-window">
+    <main class="compass-window-shell">
+      <a class="compass-window-brand" href="./" target="_blank" rel="noreferrer">Civic Renewal Atlas</a>
+      <h1>Compass</h1>
+      <p class="compass-window-intro">A synchronized map workspace and compass. GPS and added points stay in this session.</p>
+      <section class="celestial-summary-panel" aria-label="Sun, Moon, and ISS positions">
+        <div class="celestial-measurements" id="celestial-measurements" aria-live="polite"></div>
+        <dl class="celestial-time-readout" aria-label="Observation time">
+          <div><dt>Local · device</dt><dd id="celestial-local-time">—</dd><small id="celestial-local-zone">Device time zone</small></div>
+          <div><dt>Local · observer</dt><dd id="celestial-observer-time">—</dd><small id="celestial-observer-zone">Selected observer location</small></div>
+          <div><dt>UTC</dt><dd id="celestial-utc-time">—</dd><small>Coordinated Universal Time</small></div>
+        </dl>
+        <label class="celestial-view-picker" for="celestial-bezel-view">Display mode
+          <select id="celestial-bezel-view">
+            <option value="sphere">3D sky sphere</option>
+            <option value="sky-chart">2D sky chart</option>
+            <option value="world-map">Flat 2D world map · day/night</option>
+            <option value="perspective-map">Tilted 3D map · day/night</option>
+            <option value="globe-map">Rotatable 3D Earth globe · day/night</option>
+          </select>
+        </label>
+        <details class="celestial-bezel-controls">
+          <summary>Display options</summary>
+          <label><input id="celestial-bezel-visible" type="checkbox" checked> Show selected display</label>
+          <div class="celestial-body-options">
+            <label><input id="celestial-bezel-sun" type="checkbox" checked> Sun</label>
+            <label><input id="celestial-bezel-moon" type="checkbox" checked> Moon</label>
+            <label><input id="celestial-bezel-iss" type="checkbox" checked> ISS</label>
+          </div>
+          <label class="bezel-interval-picker" for="celestial-bezel-interval">Azimuth number interval
+            <select id="celestial-bezel-interval">
+              <option value="1">Every 1°</option><option value="5">Every 5°</option>
+              <option value="10">Every 10°</option><option value="15">Every 15°</option>
+              <option value="30" selected>Every 30°</option><option value="45">Every 45°</option>
+              <option value="90">Every 90°</option>
+            </select>
+          </label>
+        </details>
+        <figure id="celestial-bezel-figure" class="celestial-bezel-figure">
+          <svg id="celestial-bezel-svg" class="celestial-bezel-svg" viewBox="0 0 160 128" role="img" aria-label="Three-dimensional local sky sphere with numbered azimuth bezel and Sun, Moon, and ISS positions">
+            <title>Local sky positions</title>
+          </svg>
+          <svg id="celestial-sky-chart-svg" class="celestial-bezel-svg celestial-sky-chart-svg" viewBox="0 0 160 128" role="img" aria-label="Flat azimuth and altitude chart showing Sun, Moon, and International Space Station directions">
+            <title>Flat sky chart</title>
+          </svg>
+          <div id="iss-world-map" class="iss-world-map" role="application" aria-label="OpenStreetMap world map with sunlight, nighttime shading, Sun and Moon subpoints, and live ISS position" hidden></div>
+          <figcaption id="celestial-display-caption">Local sky orientation · azimuth 000° is north, 090° east · altitude 0° is the horizon. Approximate for the selected time and origin.</figcaption>
+        </figure>
+      </section>
+      <section class="compass-map-section" aria-labelledby="window-map-title">
+        <h2 id="window-map-title">Map preview</h2>
+        <div class="compass-map-toolbar">
+          <label for="window-basemap-select">Basemap
+            <select id="window-basemap-select">
+              <option value="street">Street · OpenStreetMap</option>
+              <option value="satellite">Satellite · Esri</option>
+              <option value="terrain">Terrain · OpenTopoMap</option>
+            </select>
+          </label>
+          <span id="window-map-status" role="status" aria-live="polite">Connecting to the map window…</span>
+        </div>
+        <div id="window-map" role="application" aria-label="Interactive map preview"></div>
+        <details class="window-map-tools" open>
+          <summary>Map tools and data layers</summary>
+          <div class="window-map-layer-options">
+            <label><input id="window-layer-epa" type="checkbox"> EPA sites</label>
+            <label><input id="window-layer-buildings" type="checkbox"> Community reuse leads</label>
+            <label><input id="window-layer-reference" type="checkbox"> Public-service references</label>
+          </div>
+          <form id="window-place-search-form" class="window-map-form">
+            <label for="window-place-search">Find a place</label>
+            <div class="window-map-form-row">
+              <input id="window-place-search" type="search" placeholder="City, airport, address or ZIP" autocomplete="off">
+              <button class="small-button" type="submit">Search</button>
+            </div>
+          </form>
+          <form id="window-coordinate-form" class="window-map-form">
+            <label for="window-location-name">Add coordinates</label>
+            <input id="window-location-name" type="text" maxlength="100" placeholder="Location name (optional)">
+            <div class="window-map-form-row">
+              <input id="window-location-latitude" type="number" min="-90" max="90" step="any" placeholder="Latitude" aria-label="Latitude">
+              <input id="window-location-longitude" type="number" min="-180" max="180" step="any" placeholder="Longitude" aria-label="Longitude">
+              <button class="small-button" type="submit">Add</button>
+            </div>
+          </form>
+          <div class="window-map-actions">
+            <button id="window-add-map-center" class="small-button secondary-button" type="button">Add map center</button>
+            <button id="window-add-gps" class="small-button secondary-button" type="button">Add my GPS location</button>
+          </div>
+          <p id="window-location-status" class="compass-window-status" role="status" aria-live="polite">Search or enter coordinates to add a session-only compass location.</p>
+        </details>
+      </section>
+      <details class="window-public-sources">
+        <summary>Public data and service sources</summary>
+        <p>Choose the government and public sources you want visible below. Source pages open directly over HTTPS.</p>
+        <label class="window-source-filter" for="window-source-search">Find a source
+          <input id="window-source-search" type="search" placeholder="Agency, program, or domain">
+        </label>
+        <label class="window-source-level" for="window-source-level">Source group
+          <select id="window-source-level">
+            <option value="all">All sources</option>
+            <option value="public-data">Public data and map providers</option>
+            <option value="federal">Federal</option>
+            <option value="state">State · Florida</option>
+            <option value="county">County · Leon County</option>
+            <option value="city">City · Tallahassee</option>
+            <option value="other">Other and community</option>
+          </select>
+        </label>
+        <div id="window-source-options" class="window-source-options" aria-label="Select public sources"></div>
+        <ul id="window-selected-sources" class="window-selected-sources" aria-live="polite">
+          <li>Select sources above to show their links here.</li>
+        </ul>
+      </details>
+      <div class="compass-window-instrument">
+        <div class="compass-ring" aria-hidden="true">
+          <svg id="window-bezel-overlay" class="compass-bezel-overlay" aria-hidden="true"></svg>
+          <span class="compass-mark north">N</span>
+          <span class="compass-mark east">E</span>
+          <span class="compass-mark south">S</span>
+          <span class="compass-mark west">W</span>
+          <span class="compass-tick tick-one"></span><span class="compass-tick tick-two"></span>
+          <span class="compass-tick tick-three"></span><span class="compass-tick tick-four"></span>
+          <span id="window-needle" class="compass-needle"></span>
+          <span class="compass-center">⌖</span>
+        </div>
+        <div class="compass-window-readout">
+          <p class="eyebrow">DEVICE HEADING</p>
+          <strong id="window-heading" aria-live="polite">—°</strong>
+          <p id="window-bearing" class="bearing-readout">Bearing: 0°</p>
+        </div>
+      </div>
+      <button id="window-compass-enable" class="primary-button" type="button">Enable compass</button>
+      <label class="bezel-control" for="window-bezel">
+        Adjust bezel
+        <input id="window-bezel" type="range" min="0" max="359" value="0">
+        <span><span>0°</span><output id="window-bezel-value">0°</output></span>
+      </label>
+      <details class="bezel-display-options">
+        <summary>Numbered bezel overlays</summary>
+        <label class="bezel-ring-visible"><input id="window-bezel-outer-visible" type="checkbox" checked> Outer bezel</label>
+        <details class="bezel-system-picker">
+          <summary>Outer number systems</summary>
+          <label><input id="window-bezel-outer-degrees" data-bezel-setting type="checkbox" checked> Degrees · 0–359</label>
+          <label><input id="window-bezel-outer-gradians" data-bezel-setting type="checkbox"> Gradians · 0–399</label>
+          <label><input id="window-bezel-outer-radians" data-bezel-setting type="checkbox"> Radians · 0–2π</label>
+          <label><input id="window-bezel-outer-mils" data-bezel-setting type="checkbox"> NATO mils · 0–6399</label>
+        </details>
+        <label class="bezel-interval-picker" for="window-bezel-outer-interval">Outer label interval
+          <select id="window-bezel-outer-interval" data-bezel-setting>
+            <option value="1">Every 1°</option><option value="5">Every 5°</option>
+            <option value="10">Every 10°</option><option value="15">Every 15°</option>
+            <option value="30" selected>Every 30°</option><option value="45">Every 45°</option>
+            <option value="90">Every 90°</option>
+          </select>
+        </label>
+        <label class="bezel-ring-visible"><input id="window-bezel-inner-visible" type="checkbox"> Inner bezel</label>
+        <details class="bezel-system-picker">
+          <summary>Inner number systems</summary>
+          <label><input id="window-bezel-inner-degrees" data-bezel-setting type="checkbox"> Degrees · 0–359</label>
+          <label><input id="window-bezel-inner-gradians" data-bezel-setting type="checkbox"> Gradians · 0–399</label>
+          <label><input id="window-bezel-inner-radians" data-bezel-setting type="checkbox"> Radians · 0–2π</label>
+          <label><input id="window-bezel-inner-mils" data-bezel-setting type="checkbox"> NATO mils · 0–6399</label>
+        </details>
+        <label class="bezel-interval-picker" for="window-bezel-inner-interval">Inner label interval
+          <select id="window-bezel-inner-interval" data-bezel-setting>
+            <option value="1">Every 1°</option><option value="5">Every 5°</option>
+            <option value="10">Every 10°</option><option value="15">Every 15°</option>
+            <option value="30" selected>Every 30°</option><option value="45">Every 45°</option>
+            <option value="90">Every 90°</option>
+          </select>
+        </label>
+        <p>Tick marks show each degree. Every-degree numbers are available but may overlap on small screens.</p>
+      </details>
+      <div class="compass-tools compass-window-tools">
+        <label for="compass-mode">Mode
+          <select id="compass-mode">
+            <option value="earth-compass">Earth compass · simple</option>
+            <option value="3d-coordinate">3D coordinates · advanced</option>
+          </select>
+        </label>
+        <label for="spatial-frame">Coordinate frame
+          <select id="spatial-frame">
+            <option value="local-enu">Local ENU · east / north / up</option>
+            <option value="earth-ecef">Earth-centered ECEF · X / Y / Z</option>
+            <option value="heliocentric-ecliptic">Sun-centered ecliptic</option>
+            <option value="earth-centered-ecliptic">Earth-centered ecliptic</option>
+            <option value="body-centered-ecliptic">Selected-body-centered ecliptic</option>
+            <option value="barycentric-icrf">Solar-system barycentric ecliptic · JPL</option>
+          </select>
+        </label>
+        <div class="compass-coordinate-options" id="compass-coordinate-options">
+          <label for="spatial-origin-body">3D origin
+            <select id="spatial-origin-body"></select>
+          </label>
+          <label for="spatial-target-body">Target body
+            <select id="spatial-target-body"></select>
+          </label>
+          <label for="ephemeris-source">Ephemeris source
+            <select id="ephemeris-source">
+              <option value="offline">Offline approximation · default</option>
+              <option value="jpl">NASA/JPL Horizons · online</option>
+            </select>
+          </label>
+        </div>
+        <div class="compass-unit-options" id="compass-unit-options">
+          <label for="angle-unit">Angle
+            <select id="angle-unit">
+              <option value="degrees">Degrees</option>
+              <option value="radians">Radians</option>
+              <option value="gradians">Gradians</option>
+              <option value="mils">NATO mils</option>
+            </select>
+          </label>
+          <label for="distance-unit">Distance
+            <select id="distance-unit">
+              <option value="meters">Meters</option>
+              <option value="kilometers" selected>Kilometers</option>
+              <option value="feet">Feet</option>
+              <option value="miles">Miles</option>
+              <option value="nautical">Nautical miles</option>
+            </select>
+          </label>
+          <label for="spatial-unit">3D units
+            <select id="spatial-unit">
+              <option value="au">Astronomical units (AU)</option>
+              <option value="million-kilometers">Million km</option>
+              <option value="kilometers">Kilometers</option>
+            </select>
+          </label>
+          <label for="bearing-reference">Heading reference
+            <select id="bearing-reference">
+              <option value="device">Device sensor</option>
+              <option value="true-north">True north · geographic</option>
+            </select>
+          </label>
+        </div>
+        <div class="compass-time-tools">
+          <label class="compass-live-time"><input id="compass-live-time" type="checkbox" checked> Live time</label>
+          <label for="compass-time">Observation time
+            <input id="compass-time" type="datetime-local">
+          </label>
+          <button id="compass-time-now" class="small-button secondary-button" type="button">Now</button>
+          <label for="compass-time-step">Step
+            <select id="compass-time-step">
+              <option value="minute">1 minute</option>
+              <option value="hour">1 hour</option>
+              <option value="day" selected>1 day</option>
+              <option value="week">1 week</option>
+              <option value="month">1 month</option>
+              <option value="year">1 year</option>
+            </select>
+          </label>
+          <button id="compass-time-back" class="small-button secondary-button" type="button" aria-label="Step time backward">−</button>
+          <button id="compass-time-forward" class="small-button secondary-button" type="button" aria-label="Step time forward">+</button>
+        </div>
+        <details class="compass-targets" open>
+          <summary>Compass locations <span id="compass-target-count">0 selected</span></summary>
+          <label class="compass-map-overlay"><input id="compass-map-overlay-toggle" type="checkbox" checked> Show selected locations on map</label>
+          <label for="compass-origin-location">Origin location
+            <select id="compass-origin-location"><option value="map-center">Current map center</option></select>
+          </label>
+          <label class="compass-target-filter" for="compass-target-filter">Find selected locations
+            <input id="compass-target-filter" type="search" placeholder="Search compass locations">
+          </label>
+          <ul id="compass-target-list" aria-label="Select locations for compass calculations"></ul>
+        </details>
+        <div class="compass-measurements" id="compass-measurements" aria-live="polite">
+          <p>Connect to the map to receive locations and keep compass settings synchronized.</p>
+        </div>
+        <p id="ephemeris-status" class="compass-window-status" role="status" aria-live="polite">Offline estimates are local and approximate. JPL Horizons is optional and requires internet access.</p>
+        <button id="ephemeris-load" class="small-button secondary-button" type="button" hidden>Load precise JPL vector</button>
+        <details class="public-landmark-picker">
+          <summary>Find public landmarks in map view</summary>
+          <div class="public-landmark-options">
+            <label><input type="checkbox" data-landmark-type="police" checked> Police</label>
+            <label><input type="checkbox" data-landmark-type="medical" checked> Hospitals and clinics</label>
+            <label><input type="checkbox" data-landmark-type="airports" checked> Airports</label>
+            <label><input type="checkbox" data-landmark-type="bus" checked> Bus stations</label>
+            <label><input type="checkbox" data-landmark-type="rail" checked> Rail stations</label>
+            <label><input type="checkbox" data-landmark-type="ports" checked> Ports and harbors</label>
+            <label><input type="checkbox" data-landmark-type="civic" checked> Civic and public facilities</label>
+          </div>
+          <button id="load-public-landmarks" class="small-button secondary-button" type="button">Load in this map view</button>
+          <p id="public-landmark-status" class="compass-window-status" role="status" aria-live="polite">The map supplies the current search area.</p>
+          <p class="public-landmark-source">Source: <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap contributors</a> via <a href="https://overpass-api.de/" target="_blank" rel="noreferrer">Overpass API</a> · ODbL · <span id="public-landmark-source-updated">Not queried this session</span></p>
+        </details>
+      </div>
+      <p id="window-compass-status" class="compass-window-status" role="status" aria-live="polite">Waiting for the map window to connect.</p>
+      <p class="compass-window-note">Compass permission is requested only when you tap Enable compass. Device sensors may require HTTPS and permission.</p>
+    </main>
+    <script src="https://unpkg.com/maplibre-gl@5.6.1/dist/maplibre-gl.js"></script>
+    <script type="module" src="./src/compass-window.js?v=iss-sky-normalize"></script>
+  </body>
+</html>

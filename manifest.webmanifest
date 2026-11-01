@@ -1,0 +1,17 @@
+{
+  "name": "Civic Renewal Atlas",
+  "short_name": "Renewal Atlas",
+  "description": "Public environmental data, VA services, and community action on a map.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f5f7f2",
+  "theme_color": "#123a34",
+  "icons": [
+    {
+      "src": "./icons/atlas.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
