@@ -6,10 +6,45 @@ export const BEZEL_SYSTEMS = {
 };
 
 export const BEZEL_INTERVALS = [1, 5, 10, 15, 30, 45, 90];
+export const BEARING_ARROW_COLORS = [
+  "#c33d32",
+  "#176b87",
+  "#8b5a16",
+  "#7047a3",
+  "#267448",
+  "#a43f76",
+  "#4d5fb4",
+  "#a34f22",
+];
+
+export function bearingArrowColor(index) {
+  return BEARING_ARROW_COLORS[index % BEARING_ARROW_COLORS.length];
+}
 
 export const DEFAULT_BEZEL_DISPLAY = {
-  outer: { visible: true, systems: ["degrees"], interval: 30 },
-  inner: { visible: false, systems: [], interval: 30 },
+  zoom: 1.2,
+  outer: {
+    visible: true,
+    systems: ["degrees"],
+    interval: 30,
+    color: "#315d4a",
+    rotation: 0,
+    radius: 44,
+    labelRadius: 38,
+    labelSize: 4.2,
+    systemSpacing: 5,
+  },
+  inner: {
+    visible: false,
+    systems: [],
+    interval: 30,
+    color: "#45698b",
+    rotation: 0,
+    radius: 33,
+    labelRadius: 28,
+    labelSize: 4,
+    systemSpacing: 4,
+  },
 };
 export const DEFAULT_CELESTIAL_BEZEL = {
   visible: true,
@@ -21,21 +56,37 @@ export const DEFAULT_CELESTIAL_BEZEL = {
 };
 
 export function normalizeBezelDisplay(value) {
+  const zoom = value?.zoom;
   const normalizeRing = (ring, fallback) => {
     const visible = typeof ring?.visible === "boolean" ? ring.visible : fallback.visible;
     const systems = Array.isArray(ring?.systems)
       ? [...new Set(ring.systems.filter((system) => Object.hasOwn(BEZEL_SYSTEMS, system)))]
       : [...fallback.systems];
     const interval = BEZEL_INTERVALS.includes(ring?.interval) ? ring.interval : fallback.interval;
+    const normalizeNumber = (key, minimum, maximum, precision = 0) => {
+      const number = Number(ring?.[key]);
+      if (!Number.isFinite(number)) return fallback[key];
+      const factor = 10 ** precision;
+      return Math.round(Math.max(minimum, Math.min(maximum, number)) * factor) / factor;
+    };
     return {
       visible,
       systems: visible && systems.length === 0 ? ["degrees"] : systems,
       interval,
+      color: /^#[\da-f]{6}$/i.test(ring?.color) ? ring.color.toLowerCase() : fallback.color,
+      rotation: normalizeNumber("rotation", -180, 180, 1),
+      radius: normalizeNumber("radius", 20, 47, 1),
+      labelRadius: normalizeNumber("labelRadius", 15, 47, 1),
+      labelSize: normalizeNumber("labelSize", 2, 8, 1),
+      systemSpacing: normalizeNumber("systemSpacing", 1, 10, 1),
     };
   };
   return {
     outer: normalizeRing(value?.outer, DEFAULT_BEZEL_DISPLAY.outer),
     inner: normalizeRing(value?.inner, DEFAULT_BEZEL_DISPLAY.inner),
+    zoom: Number.isFinite(zoom)
+      ? Math.round(Math.max(0.8, Math.min(1.8, zoom)) * 100) / 100
+      : DEFAULT_BEZEL_DISPLAY.zoom,
   };
 }
 
@@ -77,6 +128,7 @@ export function buildBezelLabels(value) {
     const settings = display[ring];
     if (!settings.visible || !settings.systems.length) continue;
     settings.systems.forEach((system, index) => {
+      const radius = Math.max(12, settings.labelRadius - index * settings.systemSpacing);
       for (let angle = 0; angle < 360; angle += settings.interval) {
         let text;
         if (system === "degrees") text = String(angle).padStart(3, "0");
@@ -90,7 +142,8 @@ export function buildBezelLabels(value) {
           system,
           angle,
           text,
-          radius: ring === "outer" ? 38 - index * 5 : 28 - index * 4,
+          radius,
+          size: settings.labelSize,
         });
       }
     });
@@ -100,41 +153,48 @@ export function buildBezelLabels(value) {
 
 export function renderBezelOverlay(svg, value, rotation = 0) {
   const display = normalizeBezelDisplay(value);
+  svg.closest(".compass-ring")?.style.setProperty("--compass-zoom", display.zoom);
   const key = JSON.stringify(display);
   if (svg.dataset.displayKey !== key) {
     svg.replaceChildren();
     svg.setAttribute("viewBox", "0 0 100 100");
     svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
     const namespace = "http://www.w3.org/2000/svg";
-    const tickPath = [];
     for (const ring of ["outer", "inner"]) {
       const settings = display[ring];
       if (!settings.visible) continue;
-      const outerRadius = ring === "outer" ? 44 : 33;
+      const tickPath = [];
+      const outerRadius = settings.radius;
       for (let degree = 0; degree < 360; degree += 1) {
-        const radians = (degree - 90) * Math.PI / 180;
+        const radians = (degree + settings.rotation - 90) * Math.PI / 180;
         const innerRadius = degree % 10 === 0
-          ? outerRadius - 4
-          : degree % 5 === 0 ? outerRadius - 3 : outerRadius - 1.8;
+          ? outerRadius - Math.min(4, outerRadius * 0.12)
+          : degree % 5 === 0
+            ? outerRadius - Math.min(3, outerRadius * 0.09)
+            : outerRadius - Math.min(1.8, outerRadius * 0.055);
         const x1 = 50 + Math.cos(radians) * outerRadius;
         const y1 = 50 + Math.sin(radians) * outerRadius;
         const x2 = 50 + Math.cos(radians) * innerRadius;
         const y2 = 50 + Math.sin(radians) * innerRadius;
         tickPath.push(`M${x1.toFixed(2)} ${y1.toFixed(2)}L${x2.toFixed(2)} ${y2.toFixed(2)}`);
       }
-    }
-    if (tickPath.length) {
-      const ticks = document.createElementNS(namespace, "path");
-      ticks.setAttribute("class", "bezel-ticks");
-      ticks.setAttribute("d", tickPath.join(""));
-      svg.append(ticks);
+      if (tickPath.length) {
+        const ticks = document.createElementNS(namespace, "path");
+        ticks.setAttribute("class", "bezel-ticks");
+        ticks.setAttribute("data-ring", ring);
+        ticks.setAttribute("d", tickPath.join(""));
+        ticks.style.stroke = settings.color;
+        svg.append(ticks);
+      }
     }
     for (const label of buildBezelLabels(display)) {
-      const radians = (label.angle - 90) * Math.PI / 180;
+      const radians = (label.angle + display[label.ring].rotation - 90) * Math.PI / 180;
       const text = document.createElementNS(namespace, "text");
       text.setAttribute("class", "bezel-number");
       text.setAttribute("data-ring", label.ring);
       text.setAttribute("data-system", label.system);
+      text.style.fill = display[label.ring].color;
+      text.style.fontSize = `${label.size}px`;
       text.setAttribute("x", (50 + Math.cos(radians) * label.radius).toFixed(2));
       text.setAttribute("y", (50 + Math.sin(radians) * label.radius).toFixed(2));
       text.textContent = label.text;
@@ -143,6 +203,46 @@ export function renderBezelOverlay(svg, value, rotation = 0) {
     svg.dataset.displayKey = key;
   }
   svg.style.transform = `rotate(${rotation}deg)`;
+}
+
+export function renderBearingArrows(svg, bearings, rotation = 0) {
+  svg.replaceChildren();
+  svg.setAttribute("viewBox", "0 0 100 100");
+  svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+  const namespace = "http://www.w3.org/2000/svg";
+  for (const [index, bearing] of bearings.entries()) {
+    if (!Number.isFinite(bearing.bearingDegrees)) continue;
+    const angle = (bearing.bearingDegrees + rotation - 90) * Math.PI / 180;
+    const tipX = 50 + Math.cos(angle) * 38;
+    const tipY = 50 + Math.sin(angle) * 38;
+    const baseX = 50 + Math.cos(angle) * 32;
+    const baseY = 50 + Math.sin(angle) * 32;
+    const wing = 2.5;
+    const leftX = baseX + Math.cos(angle + Math.PI / 2) * wing;
+    const leftY = baseY + Math.sin(angle + Math.PI / 2) * wing;
+    const rightX = baseX + Math.cos(angle - Math.PI / 2) * wing;
+    const rightY = baseY + Math.sin(angle - Math.PI / 2) * wing;
+    const color = bearingArrowColor(index);
+    const group = document.createElementNS(namespace, "g");
+    group.setAttribute("class", "bearing-arrow");
+    group.setAttribute("data-location-id", bearing.id);
+    group.style.color = color;
+    const title = document.createElementNS(namespace, "title");
+    title.textContent = `${bearing.name}: ${Math.round(bearing.bearingDegrees)}°`;
+    const shaft = document.createElementNS(namespace, "line");
+    shaft.setAttribute("x1", "50");
+    shaft.setAttribute("y1", "50");
+    shaft.setAttribute("x2", baseX.toFixed(2));
+    shaft.setAttribute("y2", baseY.toFixed(2));
+    const head = document.createElementNS(namespace, "polygon");
+    head.setAttribute("points", `${tipX.toFixed(2)},${tipY.toFixed(2)} ${leftX.toFixed(2)},${leftY.toFixed(2)} ${rightX.toFixed(2)},${rightY.toFixed(2)}`);
+    const circle = document.createElementNS(namespace, "circle");
+    circle.setAttribute("cx", "50");
+    circle.setAttribute("cy", "50");
+    circle.setAttribute("r", "1.5");
+    group.append(title, shaft, head, circle);
+    svg.append(group);
+  }
 }
 
 export function projectCelestialDirection(azimuthDegrees, altitudeDegrees) {
