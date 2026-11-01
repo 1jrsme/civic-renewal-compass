@@ -32,6 +32,8 @@ import {
   renderCelestialBezel,
   renderCelestialSkyChart,
   renderBezelOverlay,
+  renderBearingArrows,
+  bearingArrowColor,
 } from "./bezel-model.js";
 import { createIssWorldMap, updateIssWorldMap } from "./iss-map.js";
 import { lookupTimeZone } from "./time-zone.js";
@@ -581,6 +583,13 @@ for (const control of document.querySelectorAll(".bezel-display-options input, .
     updateCompassDisplay();
   });
 }
+for (const control of document.querySelectorAll(".bezel-ring-adjustments input, .bezel-zoom-control input")) {
+  control.addEventListener("input", () => {
+    updateBezelAdjustmentReadouts("bezel");
+    syncCompassSettingsFromControls();
+    updateCompassDisplay();
+  });
+}
 byId("compass-time").addEventListener("change", (event) => {
   const selected = new Date(event.currentTarget.value);
   if (Number.isNaN(selected.getTime())) return;
@@ -639,24 +648,61 @@ map.on("moveend", () => {
 
 function readBezelDisplayControls(prefix) {
   const systems = ["degrees", "gradians", "radians", "mils"];
-  return normalizeBezelDisplay(Object.fromEntries(
+  return normalizeBezelDisplay({
+    zoom: Number(byId(`${prefix}-zoom`).value) / 100,
+    ...Object.fromEntries(
     ["outer", "inner"].map((ring) => [ring, {
       visible: byId(`${prefix}-${ring}-visible`).checked,
       systems: systems.filter((system) => byId(`${prefix}-${ring}-${system}`).checked),
       interval: Number(byId(`${prefix}-${ring}-interval`).value),
+      color: byId(`${prefix}-${ring}-color`).value,
+      rotation: Number(byId(`${prefix}-${ring}-rotation`).value),
+      radius: Number(byId(`${prefix}-${ring}-radius`).value),
+      labelRadius: Number(byId(`${prefix}-${ring}-label-radius`).value),
+      labelSize: Number(byId(`${prefix}-${ring}-label-size`).value),
+      systemSpacing: Number(byId(`${prefix}-${ring}-system-spacing`).value),
     }]),
-  ));
+    ),
+  });
+}
+
+function updateBezelAdjustmentReadouts(prefix) {
+  const zoomControl = byId(`${prefix}-zoom`);
+  document.querySelector(`[data-bezel-zoom="${zoomControl.id}"]`).textContent = `${zoomControl.value}%`;
+  for (const ring of ["outer", "inner"]) {
+    const colorControl = byId(`${prefix}-${ring}-color`);
+    const color = colorControl.value.match(/^#([\da-f]{2})([\da-f]{2})([\da-f]{2})$/i);
+    if (color) {
+      const [red, green, blue] = color.slice(1).map((channel) => Number.parseInt(channel, 16));
+      document.querySelector(`[data-bezel-color-value="${colorControl.id}"]`).textContent =
+        `rgb(${red}, ${green}, ${blue})`;
+    }
+    for (const property of ["rotation", "radius", "label-radius", "label-size", "system-spacing"]) {
+      const control = byId(`${prefix}-${ring}-${property}`);
+      const output = document.querySelector(`[data-bezel-value="${control.id}"]`);
+      const value = Number(control.value).toLocaleString(undefined, { maximumFractionDigits: 1 });
+      output.textContent = property === "rotation" ? `${value}°` : value;
+    }
+  }
 }
 
 function applyBezelDisplayControls(prefix, value) {
   const display = normalizeBezelDisplay(value);
+  byId(`${prefix}-zoom`).value = String(Math.round(display.zoom * 100));
   for (const ring of ["outer", "inner"]) {
     byId(`${prefix}-${ring}-visible`).checked = display[ring].visible;
     byId(`${prefix}-${ring}-interval`).value = String(display[ring].interval);
+    byId(`${prefix}-${ring}-color`).value = display[ring].color;
+    byId(`${prefix}-${ring}-rotation`).value = String(display[ring].rotation);
+    byId(`${prefix}-${ring}-radius`).value = String(display[ring].radius);
+    byId(`${prefix}-${ring}-label-radius`).value = String(display[ring].labelRadius);
+    byId(`${prefix}-${ring}-label-size`).value = String(display[ring].labelSize);
+    byId(`${prefix}-${ring}-system-spacing`).value = String(display[ring].systemSpacing);
     for (const system of ["degrees", "gradians", "radians", "mils"]) {
       byId(`${prefix}-${ring}-${system}`).checked = display[ring].systems.includes(system);
     }
   }
+  updateBezelAdjustmentReadouts(prefix);
 }
 
 function readCelestialBezelControls(prefix) {
@@ -699,6 +745,7 @@ function updateCompassDisplay() {
     state.compassSettings.bezelDisplay,
     state.bezelBearing,
   );
+  renderCompassBearingArrows();
   byId("compass-status").textContent = trueNorth
     ? "Geographic north reference · no magnetic declination correction"
     : heading === null
@@ -706,6 +753,20 @@ function updateCompassDisplay() {
       : `Device heading${state.userLocation ? " · GPS available" : " · enable GPS for coordinates"}`;
   renderCompassMeasurements();
   publishCompassState();
+}
+
+function renderCompassBearingArrows() {
+  const origin = getCompassOrigin();
+  const bearings = state.mapLocations
+    .filter((location) =>
+      location.compassSelected && location.id !== state.compassSettings.originLocationId
+    )
+    .map((location) => ({
+      id: location.id,
+      name: location.name,
+      bearingDegrees: bearingAndDistance(origin.coordinates, location.coordinates).bearingDegrees,
+    }));
+  renderBearingArrows(byId("compass-bearing-overlay"), bearings, state.bezelBearing);
 }
 
 function publishCompassState() {
@@ -1098,6 +1159,7 @@ function renderCompassMeasurements() {
   measurements.replaceChildren();
   celestial.replaceChildren();
   const origin = getCompassOrigin();
+  renderCompassBearingArrows();
   const selectedDate = new Date(state.compassSettings.selectedTime);
   updateObserverTimeZone(origin.coordinates);
   renderObservationTimeReadout(selectedDate, origin);
@@ -1154,16 +1216,18 @@ function renderCompassMeasurements() {
       empty.textContent = "Select one or more compass locations to calculate bearings or 3D offsets.";
       measurements.append(empty);
     }
-    for (const target of targets) {
+    for (const [index, target] of targets.entries()) {
       const row = document.createElement("article");
       row.className = "compass-measurement-row";
+      row.style.setProperty("--bearing-color", bearingArrowColor(index));
       const name = document.createElement("strong");
+      name.classList.add("compass-bearing-name");
       name.textContent = target.name;
       row.append(name);
+      const bearing = bearingAndDistance(origin.coordinates, target.coordinates);
+      appendMeasurement(row, "Bearing", formatAngle(bearing.bearingDegrees, state.compassSettings.angleUnit, true));
       if (state.compassSettings.mode === "earth-compass") {
-        const result = bearingAndDistance(origin.coordinates, target.coordinates);
-        appendMeasurement(row, "Bearing", formatAngle(result.bearingDegrees, state.compassSettings.angleUnit, true));
-        appendMeasurement(row, "Distance", formatDistance(result.distanceMeters, state.compassSettings.distanceUnit));
+        appendMeasurement(row, "Distance", formatDistance(bearing.distanceMeters, state.compassSettings.distanceUnit));
       } else {
         const targetPlace = {
           coordinates: target.coordinates,

@@ -233,6 +233,7 @@
           <div class="compass-instrument">
             <div class="compass-ring" id="compass-ring">
               <svg id="compass-bezel-overlay" class="compass-bezel-overlay" aria-hidden="true"></svg>
+              <svg id="compass-bearing-overlay" class="compass-bearing-overlay" aria-hidden="true"></svg>
               <span class="compass-mark north">N</span>
               <span class="compass-mark east">E</span>
               <span class="compass-mark south">S</span>
@@ -251,6 +252,11 @@
               <label class="bezel-control">Adjust bezel
                 <input id="bezel-control" type="range" min="0" max="359" value="0" aria-label="Adjust compass bezel bearing">
                 <span><span>0°</span><output id="bezel-value">0°</output></span>
+              </label>
+              <label class="bezel-control bezel-zoom-control" for="bezel-zoom">
+                Compass size / zoom
+                <input id="bezel-zoom" type="range" min="80" max="180" step="5" value="120" data-bezel-setting>
+                <span><span>80%</span><output data-bezel-zoom="bezel-zoom">120%</output><span>180%</span></span>
               </label>
               <p id="bearing-readout" class="bearing-readout">Bearing: —</p>
               <details class="bezel-display-options">
@@ -271,6 +277,33 @@
                     <option value="90">Every 90°</option>
                   </select>
                 </label>
+                <details class="bezel-ring-adjustments">
+                  <summary>Adjust outer ring and numbering</summary>
+                  <label class="bezel-color-picker" for="bezel-outer-color">RGB color
+                    <input id="bezel-outer-color" type="color" value="#315d4a" data-bezel-setting>
+                    <output data-bezel-color-value="bezel-outer-color">rgb(49, 93, 74)</output>
+                  </label>
+                  <label class="bezel-adjustment" for="bezel-outer-rotation">Ring rotation
+                    <input id="bezel-outer-rotation" type="range" min="-180" max="180" step="1" value="0" data-bezel-setting>
+                    <output data-bezel-value="bezel-outer-rotation">0°</output>
+                  </label>
+                  <label class="bezel-adjustment" for="bezel-outer-radius">Ring radius
+                    <input id="bezel-outer-radius" type="range" min="20" max="47" step="0.5" value="44" data-bezel-setting>
+                    <output data-bezel-value="bezel-outer-radius">44</output>
+                  </label>
+                  <label class="bezel-adjustment" for="bezel-outer-label-radius">Number radius
+                    <input id="bezel-outer-label-radius" type="range" min="15" max="47" step="0.5" value="38" data-bezel-setting>
+                    <output data-bezel-value="bezel-outer-label-radius">38</output>
+                  </label>
+                  <label class="bezel-adjustment" for="bezel-outer-label-size">Number size
+                    <input id="bezel-outer-label-size" type="range" min="2" max="8" step="0.1" value="4.2" data-bezel-setting>
+                    <output data-bezel-value="bezel-outer-label-size">4.2</output>
+                  </label>
+                  <label class="bezel-adjustment" for="bezel-outer-system-spacing">Number system spacing
+                    <input id="bezel-outer-system-spacing" type="range" min="1" max="10" step="0.5" value="5" data-bezel-setting>
+                    <output data-bezel-value="bezel-outer-system-spacing">5</output>
+                  </label>
+                </details>
                 <label class="bezel-ring-visible"><input id="bezel-inner-visible" type="checkbox"> Inner bezel</label>
                 <details class="bezel-system-picker">
                   <summary>Inner number systems</summary>
@@ -287,6 +320,33 @@
                     <option value="90">Every 90°</option>
                   </select>
                 </label>
+                <details class="bezel-ring-adjustments">
+                  <summary>Adjust inner ring and numbering</summary>
+                  <label class="bezel-color-picker" for="bezel-inner-color">RGB color
+                    <input id="bezel-inner-color" type="color" value="#45698b" data-bezel-setting>
+                    <output data-bezel-color-value="bezel-inner-color">rgb(69, 105, 139)</output>
+                  </label>
+                  <label class="bezel-adjustment" for="bezel-inner-rotation">Ring rotation
+                    <input id="bezel-inner-rotation" type="range" min="-180" max="180" step="1" value="0" data-bezel-setting>
+                    <output data-bezel-value="bezel-inner-rotation">0°</output>
+                  </label>
+                  <label class="bezel-adjustment" for="bezel-inner-radius">Ring radius
+                    <input id="bezel-inner-radius" type="range" min="20" max="47" step="0.5" value="33" data-bezel-setting>
+                    <output data-bezel-value="bezel-inner-radius">33</output>
+                  </label>
+                  <label class="bezel-adjustment" for="bezel-inner-label-radius">Number radius
+                    <input id="bezel-inner-label-radius" type="range" min="15" max="47" step="0.5" value="28" data-bezel-setting>
+                    <output data-bezel-value="bezel-inner-label-radius">28</output>
+                  </label>
+                  <label class="bezel-adjustment" for="bezel-inner-label-size">Number size
+                    <input id="bezel-inner-label-size" type="range" min="2" max="8" step="0.1" value="4" data-bezel-setting>
+                    <output data-bezel-value="bezel-inner-label-size">4</output>
+                  </label>
+                  <label class="bezel-adjustment" for="bezel-inner-system-spacing">Number system spacing
+                    <input id="bezel-inner-system-spacing" type="range" min="1" max="10" step="0.5" value="4" data-bezel-setting>
+                    <output data-bezel-value="bezel-inner-system-spacing">4</output>
+                  </label>
+                </details>
                 <p>Tick marks show each degree. Every-degree numbers are available but may overlap on small screens.</p>
               </details>
               <p id="compass-window-status" class="compass-window-status" role="status" aria-live="polite"></p>

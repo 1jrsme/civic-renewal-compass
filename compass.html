@@ -57,74 +57,12 @@
           <figcaption id="celestial-display-caption">Local sky orientation · azimuth 000° is north, 090° east · altitude 0° is the horizon. Approximate for the selected time and origin.</figcaption>
         </figure>
       </section>
-      <section class="compass-map-section" aria-labelledby="window-map-title">
-        <h2 id="window-map-title">Map preview</h2>
-        <div class="compass-map-toolbar">
-          <label for="window-basemap-select">Basemap
-            <select id="window-basemap-select">
-              <option value="street">Street · OpenStreetMap</option>
-              <option value="satellite">Satellite · Esri</option>
-              <option value="terrain">Terrain · OpenTopoMap</option>
-            </select>
-          </label>
-          <span id="window-map-status" role="status" aria-live="polite">Connecting to the map window…</span>
-        </div>
-        <div id="window-map" role="application" aria-label="Interactive map preview"></div>
-        <details class="window-map-tools" open>
-          <summary>Map tools and data layers</summary>
-          <div class="window-map-layer-options">
-            <label><input id="window-layer-epa" type="checkbox"> EPA sites</label>
-            <label><input id="window-layer-buildings" type="checkbox"> Community reuse leads</label>
-            <label><input id="window-layer-reference" type="checkbox"> Public-service references</label>
-          </div>
-          <form id="window-place-search-form" class="window-map-form">
-            <label for="window-place-search">Find a place</label>
-            <div class="window-map-form-row">
-              <input id="window-place-search" type="search" placeholder="City, airport, address or ZIP" autocomplete="off">
-              <button class="small-button" type="submit">Search</button>
-            </div>
-          </form>
-          <form id="window-coordinate-form" class="window-map-form">
-            <label for="window-location-name">Add coordinates</label>
-            <input id="window-location-name" type="text" maxlength="100" placeholder="Location name (optional)">
-            <div class="window-map-form-row">
-              <input id="window-location-latitude" type="number" min="-90" max="90" step="any" placeholder="Latitude" aria-label="Latitude">
-              <input id="window-location-longitude" type="number" min="-180" max="180" step="any" placeholder="Longitude" aria-label="Longitude">
-              <button class="small-button" type="submit">Add</button>
-            </div>
-          </form>
-          <div class="window-map-actions">
-            <button id="window-add-map-center" class="small-button secondary-button" type="button">Add map center</button>
-            <button id="window-add-gps" class="small-button secondary-button" type="button">Add my GPS location</button>
-          </div>
-          <p id="window-location-status" class="compass-window-status" role="status" aria-live="polite">Search or enter coordinates to add a session-only compass location.</p>
-        </details>
-      </section>
-      <details class="window-public-sources">
-        <summary>Public data and service sources</summary>
-        <p>Choose the government and public sources you want visible below. Source pages open directly over HTTPS.</p>
-        <label class="window-source-filter" for="window-source-search">Find a source
-          <input id="window-source-search" type="search" placeholder="Agency, program, or domain">
-        </label>
-        <label class="window-source-level" for="window-source-level">Source group
-          <select id="window-source-level">
-            <option value="all">All sources</option>
-            <option value="public-data">Public data and map providers</option>
-            <option value="federal">Federal</option>
-            <option value="state">State · Florida</option>
-            <option value="county">County · Leon County</option>
-            <option value="city">City · Tallahassee</option>
-            <option value="other">Other and community</option>
-          </select>
-        </label>
-        <div id="window-source-options" class="window-source-options" aria-label="Select public sources"></div>
-        <ul id="window-selected-sources" class="window-selected-sources" aria-live="polite">
-          <li>Select sources above to show their links here.</li>
-        </ul>
-      </details>
+      <section class="compass-instrument-section" aria-labelledby="window-compass-title">
+        <h2 id="window-compass-title">Compass and spatial tools</h2>
       <div class="compass-window-instrument">
         <div class="compass-ring" aria-hidden="true">
           <svg id="window-bezel-overlay" class="compass-bezel-overlay" aria-hidden="true"></svg>
+          <svg id="window-bearing-overlay" class="compass-bearing-overlay" aria-hidden="true"></svg>
           <span class="compass-mark north">N</span>
           <span class="compass-mark east">E</span>
           <span class="compass-mark south">S</span>
@@ -146,6 +84,11 @@
         <input id="window-bezel" type="range" min="0" max="359" value="0">
         <span><span>0°</span><output id="window-bezel-value">0°</output></span>
       </label>
+      <label class="bezel-control bezel-zoom-control" for="window-bezel-zoom">
+        Compass size / zoom
+        <input id="window-bezel-zoom" type="range" min="80" max="180" step="5" value="120" data-bezel-setting>
+        <span><span>80%</span><output data-bezel-zoom="window-bezel-zoom">120%</output><span>180%</span></span>
+      </label>
       <details class="bezel-display-options">
         <summary>Numbered bezel overlays</summary>
         <label class="bezel-ring-visible"><input id="window-bezel-outer-visible" type="checkbox" checked> Outer bezel</label>
@@ -164,6 +107,33 @@
             <option value="90">Every 90°</option>
           </select>
         </label>
+        <details class="bezel-ring-adjustments">
+          <summary>Adjust outer ring and numbering</summary>
+          <label class="bezel-color-picker" for="window-bezel-outer-color">RGB color
+            <input id="window-bezel-outer-color" type="color" value="#315d4a" data-bezel-setting>
+            <output data-bezel-color-value="window-bezel-outer-color">rgb(49, 93, 74)</output>
+          </label>
+          <label class="bezel-adjustment" for="window-bezel-outer-rotation">Ring rotation
+            <input id="window-bezel-outer-rotation" type="range" min="-180" max="180" step="1" value="0" data-bezel-setting>
+            <output data-bezel-value="window-bezel-outer-rotation">0°</output>
+          </label>
+          <label class="bezel-adjustment" for="window-bezel-outer-radius">Ring radius
+            <input id="window-bezel-outer-radius" type="range" min="20" max="47" step="0.5" value="44" data-bezel-setting>
+            <output data-bezel-value="window-bezel-outer-radius">44</output>
+          </label>
+          <label class="bezel-adjustment" for="window-bezel-outer-label-radius">Number radius
+            <input id="window-bezel-outer-label-radius" type="range" min="15" max="47" step="0.5" value="38" data-bezel-setting>
+            <output data-bezel-value="window-bezel-outer-label-radius">38</output>
+          </label>
+          <label class="bezel-adjustment" for="window-bezel-outer-label-size">Number size
+            <input id="window-bezel-outer-label-size" type="range" min="2" max="8" step="0.1" value="4.2" data-bezel-setting>
+            <output data-bezel-value="window-bezel-outer-label-size">4.2</output>
+          </label>
+          <label class="bezel-adjustment" for="window-bezel-outer-system-spacing">Number system spacing
+            <input id="window-bezel-outer-system-spacing" type="range" min="1" max="10" step="0.5" value="5" data-bezel-setting>
+            <output data-bezel-value="window-bezel-outer-system-spacing">5</output>
+          </label>
+        </details>
         <label class="bezel-ring-visible"><input id="window-bezel-inner-visible" type="checkbox"> Inner bezel</label>
         <details class="bezel-system-picker">
           <summary>Inner number systems</summary>
@@ -180,6 +150,33 @@
             <option value="90">Every 90°</option>
           </select>
         </label>
+        <details class="bezel-ring-adjustments">
+          <summary>Adjust inner ring and numbering</summary>
+          <label class="bezel-color-picker" for="window-bezel-inner-color">RGB color
+            <input id="window-bezel-inner-color" type="color" value="#45698b" data-bezel-setting>
+            <output data-bezel-color-value="window-bezel-inner-color">rgb(69, 105, 139)</output>
+          </label>
+          <label class="bezel-adjustment" for="window-bezel-inner-rotation">Ring rotation
+            <input id="window-bezel-inner-rotation" type="range" min="-180" max="180" step="1" value="0" data-bezel-setting>
+            <output data-bezel-value="window-bezel-inner-rotation">0°</output>
+          </label>
+          <label class="bezel-adjustment" for="window-bezel-inner-radius">Ring radius
+            <input id="window-bezel-inner-radius" type="range" min="20" max="47" step="0.5" value="33" data-bezel-setting>
+            <output data-bezel-value="window-bezel-inner-radius">33</output>
+          </label>
+          <label class="bezel-adjustment" for="window-bezel-inner-label-radius">Number radius
+            <input id="window-bezel-inner-label-radius" type="range" min="15" max="47" step="0.5" value="28" data-bezel-setting>
+            <output data-bezel-value="window-bezel-inner-label-radius">28</output>
+          </label>
+          <label class="bezel-adjustment" for="window-bezel-inner-label-size">Number size
+            <input id="window-bezel-inner-label-size" type="range" min="2" max="8" step="0.1" value="4" data-bezel-setting>
+            <output data-bezel-value="window-bezel-inner-label-size">4</output>
+          </label>
+          <label class="bezel-adjustment" for="window-bezel-inner-system-spacing">Number system spacing
+            <input id="window-bezel-inner-system-spacing" type="range" min="1" max="10" step="0.5" value="4" data-bezel-setting>
+            <output data-bezel-value="window-bezel-inner-system-spacing">4</output>
+          </label>
+        </details>
         <p>Tick marks show each degree. Every-degree numbers are available but may overlap on small screens.</p>
       </details>
       <div class="compass-tools compass-window-tools">
@@ -298,6 +295,72 @@
       </div>
       <p id="window-compass-status" class="compass-window-status" role="status" aria-live="polite">Waiting for the map window to connect.</p>
       <p class="compass-window-note">Compass permission is requested only when you tap Enable compass. Device sensors may require HTTPS and permission.</p>
+      </section>
+      <section class="compass-map-section" aria-labelledby="window-map-title">
+        <h2 id="window-map-title">Map preview</h2>
+        <div class="compass-map-toolbar">
+          <label for="window-basemap-select">Basemap
+            <select id="window-basemap-select">
+              <option value="street">Street · OpenStreetMap</option>
+              <option value="satellite">Satellite · Esri</option>
+              <option value="terrain">Terrain · OpenTopoMap</option>
+            </select>
+          </label>
+          <span id="window-map-status" role="status" aria-live="polite">Connecting to the map window…</span>
+        </div>
+        <div id="window-map" role="application" aria-label="Interactive map preview"></div>
+        <details class="window-map-tools" open>
+          <summary>Map tools and data layers</summary>
+          <div class="window-map-layer-options">
+            <label><input id="window-layer-epa" type="checkbox"> EPA sites</label>
+            <label><input id="window-layer-buildings" type="checkbox"> Community reuse leads</label>
+            <label><input id="window-layer-reference" type="checkbox"> Public-service references</label>
+          </div>
+          <form id="window-place-search-form" class="window-map-form">
+            <label for="window-place-search">Find a place</label>
+            <div class="window-map-form-row">
+              <input id="window-place-search" type="search" placeholder="City, airport, address or ZIP" autocomplete="off">
+              <button class="small-button" type="submit">Search</button>
+            </div>
+          </form>
+          <form id="window-coordinate-form" class="window-map-form">
+            <label for="window-location-name">Add coordinates</label>
+            <input id="window-location-name" type="text" maxlength="100" placeholder="Location name (optional)">
+            <div class="window-map-form-row">
+              <input id="window-location-latitude" type="number" min="-90" max="90" step="any" placeholder="Latitude" aria-label="Latitude">
+              <input id="window-location-longitude" type="number" min="-180" max="180" step="any" placeholder="Longitude" aria-label="Longitude">
+              <button class="small-button" type="submit">Add</button>
+            </div>
+          </form>
+          <div class="window-map-actions">
+            <button id="window-add-map-center" class="small-button secondary-button" type="button">Add map center</button>
+            <button id="window-add-gps" class="small-button secondary-button" type="button">Add my GPS location</button>
+          </div>
+          <p id="window-location-status" class="compass-window-status" role="status" aria-live="polite">Search or enter coordinates to add a session-only compass location.</p>
+        </details>
+      </section>
+      <details class="window-public-sources">
+        <summary>Public data and service sources</summary>
+        <p>Choose the government and public sources you want visible below. Source pages open directly over HTTPS.</p>
+        <label class="window-source-filter" for="window-source-search">Find a source
+          <input id="window-source-search" type="search" placeholder="Agency, program, or domain">
+        </label>
+        <label class="window-source-level" for="window-source-level">Source group
+          <select id="window-source-level">
+            <option value="all">All sources</option>
+            <option value="public-data">Public data and map providers</option>
+            <option value="federal">Federal</option>
+            <option value="state">State · Florida</option>
+            <option value="county">County · Leon County</option>
+            <option value="city">City · Tallahassee</option>
+            <option value="other">Other and community</option>
+          </select>
+        </label>
+        <div id="window-source-options" class="window-source-options" aria-label="Select public sources"></div>
+        <ul id="window-selected-sources" class="window-selected-sources" aria-live="polite">
+          <li>Select sources above to show their links here.</li>
+        </ul>
+      </details>
     </main>
     <script src="https://unpkg.com/maplibre-gl@5.6.1/dist/maplibre-gl.js"></script>
     <script type="module" src="./src/compass-window.js?v=iss-sky-normalize"></script>

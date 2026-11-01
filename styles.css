@@ -168,10 +168,14 @@ h1 { margin-bottom: 11px; font-size: clamp(32px, 5vw, 50px); line-height: 1.08; 
 .gps-readout strong { font-size: 10px; }
 .gps-readout span { font-size: 8px; }
 .gps-readout .small-button { margin: 0; }
-.compass-ring { position: relative; flex: 0 0 auto; width: 166px; height: 166px; border: 2px solid #b8c9bd; border-radius: 50%; background: radial-gradient(circle, white 0 57%, #f0f5f0 58% 100%); box-shadow: inset 0 0 0 6px white, 0 2px 9px #16382a12; }
+.compass-ring { position: relative; flex: 0 0 auto; width: 166px; height: 166px; zoom: var(--compass-zoom, 1); border: 2px solid #b8c9bd; border-radius: 50%; background: radial-gradient(circle, white 0 57%, #f0f5f0 58% 100%); box-shadow: inset 0 0 0 6px white, 0 2px 9px #16382a12; }
 .compass-ring::before, .compass-ring::after { position: absolute; left: 50%; top: 50%; width: 1px; height: 86%; content: ""; background: #c8d4cb; transform: translate(-50%, -50%); }
 .compass-ring::after { transform: translate(-50%, -50%) rotate(90deg); }
 .compass-bezel-overlay { position: absolute; z-index: 2; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; transform-origin: center; }
+.compass-bearing-overlay { position: absolute; z-index: 3; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.bearing-arrow line { stroke: currentColor; stroke-width: 1.15; stroke-linecap: round; opacity: .8; }
+.bearing-arrow polygon { fill: currentColor; stroke: white; stroke-width: .45; }
+.bearing-arrow circle { fill: currentColor; stroke: white; stroke-width: .6; }
 .bezel-ticks { fill: none; stroke: #587769; stroke-width: .48; opacity: .8; }
 .bezel-number { fill: #315d4a; font: 700 4.2px "DM Sans", sans-serif; text-anchor: middle; dominant-baseline: central; }
 .bezel-number[data-ring="inner"] { fill: #45698b; font-size: 4px; }
@@ -200,6 +204,14 @@ h1 { margin-bottom: 11px; font-size: clamp(32px, 5vw, 50px); line-height: 1.08; 
 .bezel-system-picker > label { margin-top: 5px; display: flex; align-items: center; gap: 5px; }
 .bezel-interval-picker { margin: 6px 0 0 17px; display: grid; gap: 3px; font-size: 8px; }
 .bezel-interval-picker select { width: 100%; min-width: 0; height: 28px; padding: 0 6px; border: 1px solid var(--line); border-radius: 7px; background: white; color: var(--ink); font: 500 9px "DM Sans", sans-serif; }
+.bezel-ring-adjustments { margin: 7px 0 0 17px; }
+.bezel-ring-adjustments > summary { color: var(--green-dark); font-size: 8px; font-weight: 700; cursor: pointer; }
+.bezel-color-picker { margin-top: 6px; display: grid; grid-template-columns: auto 40px minmax(0, 1fr); align-items: center; gap: 7px; font-size: 8px; font-weight: 700; }
+.bezel-color-picker input { width: 40px; height: 28px; padding: 2px; border: 1px solid var(--line); border-radius: 6px; background: white; cursor: pointer; }
+.bezel-color-picker output { color: var(--muted); font: 500 8px "DM Sans", sans-serif; }
+.bezel-adjustment { margin-top: 6px; display: grid; grid-template-columns: minmax(105px, 1fr) minmax(90px, 2fr) 36px; align-items: center; gap: 7px; font-size: 8px; }
+.bezel-adjustment input { width: 100%; min-width: 0; margin: 0; accent-color: var(--green); }
+.bezel-adjustment output { color: var(--muted); font-size: 8px; text-align: right; }
 .bezel-display-options > p { margin: 7px 0 0; color: var(--muted); font-size: 8px; line-height: 1.4; }
 .bezel-display-options [hidden] { display: none; }
 .celestial-bezel-controls { margin-top: 8px; color: #415953; font-size: 9px; }
@@ -257,8 +269,8 @@ h1 { margin-bottom: 11px; font-size: clamp(32px, 5vw, 50px); line-height: 1.08; 
 .compass-coordinate-options[hidden], .compass-coordinate-options > label[hidden],
 .compass-tools > label[hidden] { display: none; }
 .compass-unit-options > label[hidden] { display: none; }
-.compass-map-section { margin: 20px 0 24px; }
-.compass-map-section h2 { margin: 0 0 9px; color: var(--green-dark); font-size: 17px; }
+.compass-map-section, .compass-instrument-section { margin: 20px 0 24px; }
+.compass-map-section h2, .compass-instrument-section h2 { margin: 0 0 9px; color: var(--green-dark); font-size: 17px; }
 .compass-map-toolbar { margin-bottom: 7px; display: flex; align-items: end; justify-content: space-between; gap: 8px; }
 .compass-map-toolbar > label { display: grid; gap: 4px; color: #415953; font-size: 10px; font-weight: 700; }
 .compass-map-toolbar select, .window-map-form input { min-width: 0; height: 34px; padding: 0 9px; border: 1px solid var(--line); border-radius: 8px; background: white; color: var(--ink); font-size: 11px; }
@@ -311,6 +323,8 @@ h1 { margin-bottom: 11px; font-size: clamp(32px, 5vw, 50px); line-height: 1.08; 
 .compass-measurements p, .celestial-measurements p { margin: 0; overflow-wrap: anywhere; }
 .compass-measurement-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 3px 8px; padding: 6px 0; border-top: 1px solid #edf0ec; }
 .compass-measurement-row > strong { grid-column: 1 / -1; color: var(--ink); font-size: 10px; }
+.compass-measurement-row > .compass-bearing-name { display: flex; align-items: center; gap: 6px; }
+.compass-bearing-name::before { width: 9px; height: 9px; flex: 0 0 auto; border: 2px solid var(--bearing-color, var(--green)); border-radius: 50%; content: ""; }
 .compass-measurement-row p strong { color: #344c43; }
 .celestial-measurements { padding-top: 6px; border-top: 1px solid var(--line); }
 .compass-tools .compass-window-status { margin-top: 0; font-size: 9px; }
@@ -483,7 +497,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   .compass-window-brand { display: inline-block; margin-bottom: 18px; font-size: 11px; font-weight: 700; text-decoration: none; }
   .compass-window h1 { margin-bottom: 5px; font-size: 29px; }
   .compass-window-intro, .compass-window-note { color: var(--muted); font-size: 12px; line-height: 1.5; }
-  .compass-window-instrument { margin: 18px 0; display: flex; align-items: center; gap: 20px; }
+  .compass-window-instrument { margin: 18px 0; display: flex; flex-wrap: wrap; align-items: center; gap: 20px; }
   .compass-window .compass-ring { width: 176px; height: 176px; }
   .compass-window .compass-needle { top: 39px; height: 51px; transform-origin: 2px 49px; }
   .compass-window-readout strong { display: block; font: 800 36px Manrope, sans-serif; letter-spacing: -.04em; }
